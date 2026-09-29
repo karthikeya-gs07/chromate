@@ -11,6 +11,9 @@ export const MAX_PHOTOS = 10
 // zoom 1 = photo just covers the box; ox/oy = photo's top-left relative to the box.
 export type Crop = { zoom: number; ox: number; oy: number }
 
+// single = one text field, double = two (double layout coming from Figma).
+export type TextLayout = 'single' | 'double'
+
 export type Photo = {
   id: string
   file: File
@@ -19,4 +22,5 @@ export type Photo = {
   height: number
   crop: Crop | null // null = centered, zoom 1
   text: string
+  layout: TextLayout
 }

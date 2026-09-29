@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Landing from '../screens/Landing'
 import PhotoGrid from '../screens/PhotoGrid'
+import Expanded from '../screens/Expanded'
 import { MAX_PHOTOS, type Format, type Photo } from '../lib/formats'
 
 // Reads a file's pixel size (EXIF orientation applied, same as <img> and createImageBitmap).
@@ -14,7 +15,7 @@ async function loadPhoto(file: File): Promise<Photo> {
     URL.revokeObjectURL(url)
     throw err
   }
-  return { id: crypto.randomUUID().slice(0, 8), file, url, width: img.naturalWidth, height: img.naturalHeight, crop: null, text: '' }
+  return { id: crypto.randomUUID().slice(0, 8), file, url, width: img.naturalWidth, height: img.naturalHeight, crop: null, text: '', layout: 'single' }
 }
 
 // Holds the session's photos (in memory only) and switches between screens.
@@ -24,6 +25,7 @@ export default function Editor() {
   const [format, setFormat] = useState<Format | null>(null)
   const [photos, setPhotos] = useState<Photo[]>([])
   const [dirty, setDirty] = useState(false)
+  const [openId, setOpenId] = useState<string | null>(null)
 
   // Warn before leaving with work that hasn't been downloaded.
   useEffect(() => {
@@ -62,14 +64,32 @@ export default function Editor() {
     photos.forEach((p) => URL.revokeObjectURL(p.url))
     setPhotos([])
     setFormat(null)
+    setOpenId(null)
     setDirty(false)
   }
+
+  const openPhoto = photos.find((p) => p.id === openId)
 
   return (
     <>
       <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={onFilesChosen} />
-      {format ? (
-        <PhotoGrid format={format} photos={photos} onBack={goBack} onAddMore={() => inputRef.current?.click()} onUpdatePhoto={updatePhoto} onDownloaded={() => setDirty(false)} />
+      {format && openPhoto ? (
+        <Expanded
+          format={format}
+          photo={openPhoto}
+          index={photos.indexOf(openPhoto)}
+          onBack={() => setOpenId(null)}
+          onUpdatePhoto={updatePhoto}
+        />
+      ) : format ? (
+        <PhotoGrid
+          format={format}
+          photos={photos}
+          onBack={goBack}
+          onAddMore={() => inputRef.current?.click()}
+          onOpenPhoto={setOpenId}
+          onDownloaded={() => setDirty(false)}
+        />
       ) : (
         <Landing onSelectFormat={pickPhotos} />
       )}

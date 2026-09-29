@@ -2,7 +2,6 @@ import { useState } from 'react'
 import PlusGrid from '../components/PlusGrid'
 import GlassButton from '../components/GlassButton'
 import TemplateView from '../components/TemplateView'
-import TextSheet from '../components/TextSheet'
 import backIcon from '../assets/back.svg'
 import downloadIcon from '../assets/download.svg'
 import addIcon from '../assets/add-circle.svg'
@@ -15,21 +14,17 @@ type Props = {
   photos: Photo[]
   onBack: () => void
   onAddMore: () => void
-  onUpdatePhoto: (id: string, patch: Partial<Photo>) => void
+  onOpenPhoto: (id: string) => void
   onDownloaded: () => void
 }
 
 // Figma: Grid view (node 1:2131)
-export default function PhotoGrid({ format, photos, onBack, onAddMore, onUpdatePhoto, onDownloaded }: Props) {
+export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPhoto, onDownloaded }: Props) {
   const { label, plural } = FORMATS[format]
   const template = TEMPLATES[format]
   const [busy, setBusy] = useState(false)
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const [textId, setTextId] = useState<string | null>(null)
-  const textPhoto = photos.find((p) => p.id === textId)
 
   async function downloadAll() {
-    setActiveId(null)
     setBusy(true)
     try {
       await exportAll(photos, format)
@@ -40,7 +35,7 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onUpdateP
   }
 
   return (
-    <main className="relative min-h-dvh bg-black" onClick={() => setActiveId(null)}>
+    <main className="relative min-h-dvh bg-black">
       <PlusGrid className="fixed" />
 
       <header className="relative px-[30px] pt-[calc(env(safe-area-inset-top)+36px)]">
@@ -80,16 +75,15 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onUpdateP
           </li>
         )}
         {photos.map((photo, i) => (
-          <li key={photo.id} onClick={(e) => e.stopPropagation()}>
-            <TemplateView
-              template={template}
-              photo={photo}
-              label={`${label} ${i + 1}`}
-              active={activeId === photo.id}
-              onActivate={() => setActiveId(photo.id)}
-              onCropChange={(crop) => onUpdatePhoto(photo.id, { crop })}
-              onTextTap={() => setTextId(photo.id)}
-            />
+          <li key={photo.id}>
+            <button
+              type="button"
+              onClick={() => onOpenPhoto(photo.id)}
+              aria-label={`Open ${label} ${i + 1}`}
+              className="block w-full cursor-pointer transition-transform duration-150 active:scale-[0.97]"
+            >
+              <TemplateView template={template} photo={photo} label={`${label} ${i + 1}`} />
+            </button>
           </li>
         ))}
       </ul>
@@ -106,16 +100,6 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onUpdateP
         </GlassButton>
       </div>
 
-      {textPhoto && (
-        <TextSheet
-          template={template}
-          initial={textPhoto.text}
-          onDone={(text) => {
-            onUpdatePhoto(textPhoto.id, { text })
-            setTextId(null)
-          }}
-        />
-      )}
     </main>
   )
 }
