@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Landing from '../screens/Landing'
 import PhotoGrid from '../screens/PhotoGrid'
 import Expanded from '../screens/Expanded'
+import Toast from './Toast'
 import { MAX_PHOTOS, type Format, type Photo } from '../lib/formats'
 
 // Reads a file's pixel size (EXIF orientation applied, same as <img> and createImageBitmap).
@@ -26,6 +27,14 @@ export default function Editor() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [dirty, setDirty] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
+  const [toast, setToast] = useState({ message: '', visible: false })
+  const toastTimer = useRef<number>(undefined)
+
+  function showToast(message: string) {
+    setToast({ message, visible: true })
+    window.clearTimeout(toastTimer.current)
+    toastTimer.current = window.setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2500)
+  }
 
   // Warn before leaving with work that hasn't been downloaded.
   useEffect(() => {
@@ -36,6 +45,11 @@ export default function Editor() {
   }, [dirty])
 
   function pickPhotos(next: Format) {
+    // Posts are on hold for the first release.
+    if (next === 'post') {
+      showToast('Posts are coming soon')
+      return
+    }
     setPendingFormat(next)
     inputRef.current?.click()
   }
@@ -57,6 +71,18 @@ export default function Editor() {
   function updatePhoto(id: string, patch: Partial<Photo>) {
     setPhotos((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)))
     setDirty(true)
+  }
+
+  function deletePhoto(id: string) {
+    const photo = photos.find((p) => p.id === id)
+    if (photo) URL.revokeObjectURL(photo.url)
+    const rest = photos.filter((p) => p.id !== id)
+    setPhotos(rest)
+    // Nothing left to work on: back to the start.
+    if (rest.length === 0) {
+      setFormat(null)
+      setDirty(false)
+    }
   }
 
   function goBack() {
@@ -88,11 +114,13 @@ export default function Editor() {
           onBack={goBack}
           onAddMore={() => inputRef.current?.click()}
           onOpenPhoto={setOpenId}
+          onDeletePhoto={deletePhoto}
           onDownloaded={() => setDirty(false)}
         />
       ) : (
         <Landing onSelectFormat={pickPhotos} />
       )}
+      <Toast message={toast.message} visible={toast.visible} />
     </>
   )
 }

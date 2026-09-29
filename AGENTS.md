@@ -71,8 +71,8 @@ When the user describes a feature that needs an extra library or model, list wha
 - [x] Landing screen from Figma, node 1:2
 - [x] Grid screen from Figma, node 1:2131, with Add more
 - [x] Story template from Figma, node 1:9542, lives in `src/lib/templates.ts`
-- [ ] Post template, a provisional layout for now
-- [ ] Reorder and delete
+- [ ] Post template, on hold for v1. The Post card shows a "Posts are coming soon" message.
+- [x] Delete (✕ on each tile). No reorder, by decision.
 - [x] Expanded view from Figma, node 1:5852: single/double toggle, typing straight into the text area with zoom
 - [ ] Swipe between photos in the expanded view
 - [x] Double layout from Figma, node 1:9537

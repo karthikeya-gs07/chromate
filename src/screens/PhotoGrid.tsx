@@ -15,11 +15,12 @@ type Props = {
   onBack: () => void
   onAddMore: () => void
   onOpenPhoto: (id: string) => void
+  onDeletePhoto: (id: string) => void
   onDownloaded: () => void
 }
 
 // Figma: Grid view (node 1:2131)
-export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPhoto, onDownloaded }: Props) {
+export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPhoto, onDeletePhoto, onDownloaded }: Props) {
   const { label, plural } = FORMATS[format]
   const template = TEMPLATES[format]
   const [busy, setBusy] = useState(false)
@@ -75,7 +76,7 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPho
           </li>
         )}
         {photos.map((photo, i) => (
-          <li key={photo.id}>
+          <li key={photo.id} className="relative">
             <button
               type="button"
               onClick={() => onOpenPhoto(photo.id)}
@@ -83,6 +84,19 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPho
               className="block w-full cursor-pointer transition-transform duration-150 active:scale-[0.97]"
             >
               <TemplateView template={template} photo={photo} label={`${label} ${i + 1}`} />
+            </button>
+            {/* Delete: 44px touch target around a 26px visual button, overlapping the top-right corner */}
+            <button
+              type="button"
+              onClick={() => onDeletePhoto(photo.id)}
+              aria-label={`Delete ${label} ${i + 1}`}
+              className="absolute -top-[13px] -right-[13px] flex size-11 cursor-pointer items-center justify-center"
+            >
+              <span className="flex size-[26px] items-center justify-center rounded-full border border-card-border bg-black/80 backdrop-blur-[5.2px] transition-transform active:scale-90">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                  <path d="M1 1L9 9M9 1L1 9" stroke="#FFF0C1" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </span>
             </button>
           </li>
         ))}
