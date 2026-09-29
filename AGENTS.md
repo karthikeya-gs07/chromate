@@ -67,7 +67,7 @@ When the user describes a feature that needs an extra library or model, list wha
 - [x] Nohemi font in `public/fonts`
 - [x] Local Git repo
 - [x] Live at https://chromate-five.vercel.app, from the private repo github.com/karthikeya-gs07/chromate
-- [ ] Vercel auto-deploy from GitHub. For now, deploy with `vercel deploy --prod`.
+- [x] Vercel auto-deploy from GitHub. Pushing to `main` deploys to production.
 - [x] Figma MCP connected
 - [x] Landing screen from Figma, node 1:2
 - [x] Grid screen from Figma, node 1:2131, with Add more
