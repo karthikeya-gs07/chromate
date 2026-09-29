@@ -3,18 +3,20 @@ import PlusGrid from '../components/PlusGrid'
 import GlassButton from '../components/GlassButton'
 import backIcon from '../assets/back.svg'
 import downloadIcon from '../assets/download.svg'
-import { FORMATS, type Format, type Photo } from '../lib/formats'
+import plusIcon from '../assets/add.svg'
+import { FORMATS, MAX_PHOTOS, type Format, type Photo } from '../lib/formats'
 import { exportAll } from '../lib/exportImages'
 
 type Props = {
   format: Format
   photos: Photo[]
   onBack: () => void
+  onAddMore: () => void
   onDownloaded: () => void
 }
 
 // Figma: Grid view (node 1:2131)
-export default function PhotoGrid({ format, photos, onBack, onDownloaded }: Props) {
+export default function PhotoGrid({ format, photos, onBack, onAddMore, onDownloaded }: Props) {
   const { plural, width, height } = FORMATS[format]
   const [busy, setBusy] = useState(false)
 
@@ -44,6 +46,20 @@ export default function PhotoGrid({ format, photos, onBack, onDownloaded }: Prop
       </header>
 
       <ul className="relative grid grid-cols-2 gap-6 px-[30px] pt-9 pb-[calc(max(env(safe-area-inset-bottom),34px)+140px)]">
+        {photos.length < MAX_PHOTOS && (
+          <li style={{ aspectRatio: `${width} / ${height}` }}>
+            <GlassButton
+              onClick={onAddMore}
+              className="flex size-full flex-col items-center justify-center gap-3 rounded-none"
+            >
+              <img src={plusIcon} alt="" width={28} height={28} />
+              <span className="text-lg leading-none text-cream">Add more</span>
+              <span className="text-xs leading-none text-sand">
+                {photos.length}/{MAX_PHOTOS}
+              </span>
+            </GlassButton>
+          </li>
+        )}
         {photos.map((photo, i) => (
           <li key={photo.id} className="overflow-hidden bg-white" style={{ aspectRatio: `${width} / ${height}` }}>
             <img

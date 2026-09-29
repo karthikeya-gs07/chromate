@@ -25,11 +25,14 @@ export default function Editor() {
   }
 
   function onFilesChosen(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []).slice(0, MAX_PHOTOS)
+    // When already on the grid, new photos are appended (up to MAX_PHOTOS in total).
+    const room = format ? MAX_PHOTOS - photos.length : MAX_PHOTOS
+    const files = Array.from(e.target.files ?? []).slice(0, room)
     e.target.value = ''
     if (files.length === 0) return
-    setPhotos(files.map((file) => ({ id: crypto.randomUUID().slice(0, 8), file, url: URL.createObjectURL(file) })))
-    setFormat(pendingFormat)
+    const added = files.map((file) => ({ id: crypto.randomUUID().slice(0, 8), file, url: URL.createObjectURL(file) }))
+    setPhotos((prev) => (format ? [...prev, ...added] : added))
+    if (!format) setFormat(pendingFormat)
     setDirty(true)
   }
 
@@ -45,7 +48,7 @@ export default function Editor() {
     <>
       <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={onFilesChosen} />
       {format ? (
-        <PhotoGrid format={format} photos={photos} onBack={goBack} onDownloaded={() => setDirty(false)} />
+        <PhotoGrid format={format} photos={photos} onBack={goBack} onAddMore={() => inputRef.current?.click()} onDownloaded={() => setDirty(false)} />
       ) : (
         <Landing onSelectFormat={pickPhotos} />
       )}
