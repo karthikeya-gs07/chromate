@@ -67,7 +67,7 @@ When the user describes a feature that needs an extra library or model, list wha
 - [x] Nohemi font in `public/fonts`
 - [x] Local Git repo
 - [ ] GitHub repo and Vercel deploy
-- [ ] Figma MCP connected
-- [ ] Landing screen from Figma, node 1:2 (a placeholder for now)
+- [x] Figma MCP connected
+- [x] Landing screen from Figma, node 1:2
 
 Dev server: `npx vite --port 5173 --host`
