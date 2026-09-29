@@ -5,7 +5,7 @@ import TemplateView from '../components/TemplateView'
 import TextSheet from '../components/TextSheet'
 import backIcon from '../assets/back.svg'
 import downloadIcon from '../assets/download.svg'
-import plusIcon from '../assets/add.svg'
+import addIcon from '../assets/add-circle.svg'
 import { FORMATS, MAX_PHOTOS, type Format, type Photo } from '../lib/formats'
 import { TEMPLATES } from '../lib/templates'
 import { exportAll } from '../lib/exportImages'
@@ -57,16 +57,26 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onUpdateP
       <ul className="relative grid grid-cols-2 gap-6 px-[30px] pt-9 pb-[calc(max(env(safe-area-inset-bottom),34px)+140px)]">
         {photos.length < MAX_PHOTOS && (
           <li style={{ aspectRatio: `${template.width} / ${template.height}` }}>
-            <GlassButton
+            {/* Figma: Add more tile (node 1:11392). Sizes in cqw so it scales with the tile (155px wide in Figma). */}
+            <button
+              type="button"
               onClick={onAddMore}
-              className="flex size-full flex-col items-center justify-center gap-3 rounded-none"
+              className="@container relative size-full cursor-pointer rounded-[18px] border border-card-border bg-card-fill backdrop-blur-[5.2px] transition-transform duration-150 active:scale-[0.97]"
             >
-              <img src={plusIcon} alt="" width={28} height={28} />
-              <span className="text-lg leading-none text-cream">Add more</span>
-              <span className="text-xs leading-none text-sand">
+              <img
+                src={addIcon}
+                alt=""
+                width={106}
+                height={106}
+                className="absolute top-[calc(50%-14.2cqw)] left-1/2 size-[68.4cqw] -translate-1/2"
+              />
+              <span className="absolute inset-x-0 top-[calc(50%+46.5cqw)] text-center text-[10.3cqw] leading-none text-cream">
+                Add more
+              </span>
+              <span className="absolute inset-x-0 top-[calc(50%+63.2cqw)] text-center text-[7.75cqw] leading-none text-cream/50">
                 {photos.length}/{MAX_PHOTOS}
               </span>
-            </GlassButton>
+            </button>
           </li>
         )}
         {photos.map((photo, i) => (
