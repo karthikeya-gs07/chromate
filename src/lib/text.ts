@@ -6,9 +6,13 @@ export function textWidth(text: string, font: string) {
   return measureCtx.measureText(text).width
 }
 
-// Greedy word wrap (long words break by character). Shared by the preview and the export
-// so both show the same line breaks.
+// Greedy word wrap (long words break by character), keeping manual line breaks.
+// Shared by the preview and the export so both show the same lines.
 export function wrapLines(text: string, font: string, maxWidth: number): string[] {
+  return text.split('\n').flatMap((paragraph) => wrapParagraph(paragraph, font, maxWidth))
+}
+
+function wrapParagraph(text: string, font: string, maxWidth: number): string[] {
   const lines: string[] = []
   let line = ''
   for (const word of text.split(' ')) {
@@ -31,9 +35,9 @@ export function wrapLines(text: string, font: string, maxWidth: number): string[
   return lines
 }
 
-// Cleans typed/pasted text and trims anything past the slot's line limit.
+// Trims typed/pasted text past the slot's line limit.
 export function fitText(prev: string, next: string, font: string, maxWidth: number, maxLines: number) {
-  next = next.replace(/\s*\n\s*/g, ' ')
+  next = next.replace(/\r\n?/g, '\n')
   while (next.length > prev.length && wrapLines(next, font, maxWidth).length > maxLines) next = next.slice(0, -1)
   return next
 }

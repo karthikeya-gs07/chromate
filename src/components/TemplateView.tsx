@@ -157,16 +157,9 @@ export default function TemplateView({
                 onChange={(e) => onTextChange?.(i, fitText(value, e.target.value, font, slot.w, slot.maxLines))}
                 onFocus={() => onTextFocus?.(i)}
                 onBlur={onTextBlur}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    e.currentTarget.blur()
-                  }
-                }}
                 placeholder={slot.placeholder}
                 aria-label={`${slot.placeholder} for ${label}`}
                 data-text-slot={i}
-                enterKeyHint="done"
                 autoComplete="off"
                 spellCheck={false}
                 className="absolute resize-none overflow-hidden bg-transparent p-0 break-words whitespace-pre-wrap outline-none placeholder:text-current placeholder:opacity-50"
