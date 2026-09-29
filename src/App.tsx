@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import useIsPhone from './hooks/useIsPhone'
-import Landing from './screens/Landing'
+import Editor from './components/Editor'
 
 // Loaded only on tablets/desktops so phones don't download the QR library.
 const PhoneOnly = lazy(() => import('./components/PhoneOnly'))
@@ -14,5 +14,5 @@ export default function App() {
       </Suspense>
     )
   }
-  return <Landing />
+  return <Editor />
 }
