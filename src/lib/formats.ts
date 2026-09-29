@@ -11,7 +11,7 @@ export const MAX_PHOTOS = 10
 // zoom 1 = photo just covers the box; ox/oy = photo's top-left relative to the box.
 export type Crop = { zoom: number; ox: number; oy: number }
 
-// single = one text field, double = two (double layout coming from Figma).
+// single = one text field, double = two.
 export type TextLayout = 'single' | 'double'
 
 export type Photo = {
@@ -21,6 +21,7 @@ export type Photo = {
   width: number
   height: number
   crop: Crop | null // null = centered, zoom 1
-  text: string
+  // One entry per text slot; single uses texts[0], double uses both. Kept when switching layouts.
+  texts: [string, string]
   layout: TextLayout
 }

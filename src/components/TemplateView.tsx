@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type Ref } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { Crop, Photo } from '../lib/formats'
 import { templateFont, type Template } from '../lib/templates'
 import { clampCrop, coverScale, resolveCrop, zoomAround } from '../lib/crop'
@@ -11,10 +11,9 @@ type Props = {
   // Editable: photo box takes drag/pinch and the text slot is a live input.
   editable?: boolean
   onCropChange?: (crop: Crop) => void
-  onTextChange?: (text: string) => void
-  onTextFocus?: () => void
+  onTextChange?: (slot: number, text: string) => void
+  onTextFocus?: (slot: number) => void
   onTextBlur?: () => void
-  textInputRef?: Ref<HTMLInputElement>
 }
 
 // Renders the template at its real pixel size, scaled down to fit the container width.
@@ -27,7 +26,6 @@ export default function TemplateView({
   onTextChange,
   onTextFocus,
   onTextBlur,
-  textInputRef,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0)
@@ -41,7 +39,8 @@ export default function TemplateView({
   }, [template.width])
 
   const box = template.photo
-  const { text } = template
+  const slots = template.slots[photo.layout]
+  const font = templateFont(template)
   const crop = resolveCrop(photo, box)
   const s = coverScale(photo, box) * crop.zoom
   // Latest crop between renders, so fast pointer events don't drop movement.
@@ -89,16 +88,18 @@ export default function TemplateView({
     pointers.current.delete(e.pointerId)
   }
 
-  const textStyle = {
-    left: text.x,
-    top: text.y,
-    width: text.w,
-    height: text.h,
-    fontSize: text.fontSize,
-    lineHeight: `${text.lineHeight}px`,
-    fontWeight: text.fontWeight,
-    color: text.color,
-  }
+  const { textStyle } = template
+  const slotStyle = (slot: (typeof slots)[number]) => ({
+    left: slot.x,
+    top: slot.y,
+    width: slot.w,
+    height: slot.h,
+    textAlign: slot.align,
+    fontSize: textStyle.fontSize,
+    lineHeight: `${textStyle.lineHeight}px`,
+    fontWeight: textStyle.fontWeight,
+    color: textStyle.color,
+  })
 
   return (
     <div ref={wrapRef} className="relative w-full overflow-hidden" style={{ aspectRatio: `${template.width} / ${template.height}` }}>
@@ -129,27 +130,31 @@ export default function TemplateView({
             />
           </div>
 
-          {/* Text slot: typed into directly, no separate field */}
-          {editable ? (
-            <input
-              ref={textInputRef}
-              value={photo.text}
-              onChange={(e) => onTextChange?.(fitText(photo.text, e.target.value, templateFont(template), text.w))}
-              onFocus={onTextFocus}
-              onBlur={onTextBlur}
-              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-              placeholder={text.placeholder}
-              aria-label={`Text for ${label}`}
-              enterKeyHint="done"
-              autoComplete="off"
-              className="absolute bg-transparent p-0 text-center outline-none placeholder:text-current placeholder:opacity-50"
-              style={textStyle}
-            />
-          ) : (
-            <span className="absolute overflow-hidden text-center whitespace-nowrap" style={{ ...textStyle, opacity: photo.text ? 1 : 0.5 }}>
-              {photo.text || text.placeholder}
-            </span>
-          )}
+          {/* Text slots: typed into directly, no separate field */}
+          {slots.map((slot, i) => {
+            const value = photo.texts[i]
+            return editable ? (
+              <input
+                key={i}
+                value={value}
+                onChange={(e) => onTextChange?.(i, fitText(value, e.target.value, font, slot.w))}
+                onFocus={() => onTextFocus?.(i)}
+                onBlur={onTextBlur}
+                onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                placeholder={slot.placeholder}
+                aria-label={`${slot.placeholder} for ${label}`}
+                data-text-slot={i}
+                enterKeyHint="done"
+                autoComplete="off"
+                className="absolute bg-transparent p-0 outline-none placeholder:text-current placeholder:opacity-50"
+                style={slotStyle(slot)}
+              />
+            ) : (
+              <span key={i} className="absolute overflow-hidden whitespace-nowrap" style={{ ...slotStyle(slot), opacity: value ? 1 : 0.5 }}>
+                {value || slot.placeholder}
+              </span>
+            )
+          })}
         </div>
       )}
     </div>

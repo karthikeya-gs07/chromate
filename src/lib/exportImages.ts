@@ -4,7 +4,7 @@ import { coverScale, resolveCrop } from './crop'
 
 // Renders one photo into the template at full resolution.
 async function renderPhoto(photo: Photo, template: Template): Promise<Blob> {
-  const { width, height, photo: box, text } = template
+  const { width, height, photo: box } = template
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
@@ -25,13 +25,16 @@ async function renderPhoto(photo: Photo, template: Template): Promise<Blob> {
   ctx.restore()
   bitmap.close()
 
-  if (photo.text.trim()) {
-    ctx.font = templateFont(template)
-    ctx.fillStyle = text.color
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(photo.text, text.x + text.w / 2, text.y + text.lineHeight / 2, text.w)
-  }
+  ctx.font = templateFont(template)
+  ctx.fillStyle = template.textStyle.color
+  ctx.textBaseline = 'middle'
+  template.slots[photo.layout].forEach((slot, i) => {
+    const value = photo.texts[i].trim()
+    if (!value) return
+    ctx.textAlign = slot.align
+    const x = slot.align === 'left' ? slot.x : slot.align === 'right' ? slot.x + slot.w : slot.x + slot.w / 2
+    ctx.fillText(value, x, slot.y + template.textStyle.lineHeight / 2, slot.w)
+  })
 
   return new Promise<Blob>((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Export failed'))), 'image/jpeg', 0.92),

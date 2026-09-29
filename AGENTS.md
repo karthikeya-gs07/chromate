@@ -75,6 +75,6 @@ When the user describes a feature that needs an extra library or model, list wha
 - [ ] Reorder and delete
 - [x] Expanded view from Figma, node 1:5852: single/double toggle, typing straight into the text area with zoom
 - [ ] Swipe between photos in the expanded view
-- [ ] Double layout, still to be defined by the user
+- [x] Double layout from Figma, node 1:9537
 
 Dev server: `npx vite --port 5173 --host`

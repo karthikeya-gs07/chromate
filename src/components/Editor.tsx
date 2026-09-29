@@ -15,7 +15,7 @@ async function loadPhoto(file: File): Promise<Photo> {
     URL.revokeObjectURL(url)
     throw err
   }
-  return { id: crypto.randomUUID().slice(0, 8), file, url, width: img.naturalWidth, height: img.naturalHeight, crop: null, text: '', layout: 'single' }
+  return { id: crypto.randomUUID().slice(0, 8), file, url, width: img.naturalWidth, height: img.naturalHeight, crop: null, texts: ['', ''], layout: 'single' }
 }
 
 // Holds the session's photos (in memory only) and switches between screens.

@@ -20,9 +20,10 @@ const LAYOUTS: TextLayout[] = ['single', 'double']
 export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }: Props) {
   const template = TEMPLATES[format]
   const stageRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
   const [previewWidth, setPreviewWidth] = useState(0)
-  const [editing, setEditing] = useState(false)
+  // Index of the text slot being typed into, or null.
+  const [editingSlot, setEditingSlot] = useState<number | null>(null)
+  const editing = editingSlot !== null
   const [zoom, setZoom] = useState<{ transform: string; origin: string } | null>(null)
 
   // Fit the template inside the stage (width- or height-limited).
@@ -39,7 +40,8 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
   // Zoom so the text slot fills the screen width, placed in the area above the keyboard.
   const computeZoom = useCallback(() => {
     const stage = stageRef.current
-    if (!stage || previewWidth === 0) return
+    const slot = editingSlot === null ? null : template.slots[photo.layout][editingSlot]
+    if (!stage || !slot || previewWidth === 0) return
     // Untransformed preview position: centered in the stage's content box, top-aligned.
     const rect = stage.getBoundingClientRect()
     const cs = getComputedStyle(stage)
@@ -49,17 +51,16 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
     const top = rect.top + parseFloat(cs.paddingTop)
 
     const s = previewWidth / template.width
-    const { text } = template
-    const cx = (text.x + text.w / 2) * s
-    const cy = (text.y + text.h / 2) * s
-    const z = (window.innerWidth - 32) / (text.w * s)
+    const cx = (slot.x + slot.w / 2) * s
+    const cy = (slot.y + slot.h / 2) * s
+    const z = (window.innerWidth - 32) / (slot.w * s)
     const vv = window.visualViewport
     const targetY = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) * 0.4
     setZoom({
       transform: `translate(${window.innerWidth / 2 - (left + cx)}px, ${targetY - (top + cy)}px) scale(${z})`,
       origin: `${cx}px ${cy}px`,
     })
-  }, [previewWidth, template])
+  }, [previewWidth, template, photo.layout, editingSlot])
 
   useEffect(() => {
     if (!editing) {
@@ -73,7 +74,7 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
     const onResize = () => {
       // Keyboard dismissed without blur (e.g. Android back button): finish editing.
       if (vv.height < window.innerHeight * 0.85) keyboardSeen = true
-      else if (keyboardSeen) inputRef.current?.blur()
+      else if (keyboardSeen) blurText()
       computeZoom()
     }
     vv.addEventListener('resize', onResize)
@@ -84,6 +85,17 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
     }
   }, [editing, computeZoom])
 
+  function blurText() {
+    const el = document.activeElement
+    if (el instanceof HTMLInputElement) el.blur()
+  }
+
+  function setText(slot: number, text: string) {
+    const texts: [string, string] = [...photo.texts]
+    texts[slot] = text
+    onUpdatePhoto(photo.id, { texts })
+  }
+
   const layoutIndex = LAYOUTS.indexOf(photo.layout)
   const title = `${photo.layout === 'single' ? 'Single' : 'Double'} ${FORMATS[format].label}`
   const hideWhileEditing = `transition-opacity duration-300 ${editing ? 'pointer-events-none opacity-0' : ''}`
@@ -93,9 +105,9 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
       className="relative flex h-dvh flex-col overflow-hidden bg-black"
       // Tapping anywhere outside the text while typing closes the keyboard.
       onPointerDownCapture={(e) => {
-        if (editing && e.target !== inputRef.current) {
+        if (editing && !(e.target instanceof HTMLElement && e.target.dataset.textSlot)) {
           e.preventDefault()
-          inputRef.current?.blur()
+          blurText()
         }
       }}
     >
@@ -119,10 +131,9 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
             label={`${FORMATS[format].label} ${index + 1}`}
             editable
             onCropChange={(crop) => onUpdatePhoto(photo.id, { crop })}
-            onTextChange={(text) => onUpdatePhoto(photo.id, { text })}
-            onTextFocus={() => setEditing(true)}
-            onTextBlur={() => setEditing(false)}
-            textInputRef={inputRef}
+            onTextChange={setText}
+            onTextFocus={setEditingSlot}
+            onTextBlur={() => setEditingSlot(null)}
           />
         </div>
       </div>
