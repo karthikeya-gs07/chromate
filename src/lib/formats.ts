@@ -7,8 +7,16 @@ export const FORMATS: Record<Format, { label: string; plural: string; width: num
 
 export const MAX_PHOTOS = 10
 
+// Photo position inside the template's photo box, in template pixels.
+// zoom 1 = photo just covers the box; ox/oy = photo's top-left relative to the box.
+export type Crop = { zoom: number; ox: number; oy: number }
+
 export type Photo = {
   id: string
   file: File
   url: string
+  width: number
+  height: number
+  crop: Crop | null // null = centered, zoom 1
+  text: string
 }

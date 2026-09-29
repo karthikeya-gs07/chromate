@@ -1,30 +1,53 @@
-import { FORMATS, type Format, type Photo } from './formats'
+import type { Format, Photo } from './formats'
+import { TEMPLATES, templateFont, type Template } from './templates'
+import { coverScale, resolveCrop } from './crop'
 
-// Draws the photo cover-cropped into the full-size canvas.
-// TODO: replace with the template renderer once the template arrives from Figma.
-async function renderPhoto(photo: Photo, format: Format, index: number): Promise<File> {
-  const { width, height } = FORMATS[format]
-  const bitmap = await createImageBitmap(photo.file)
+// Renders one photo into the template at full resolution.
+async function renderPhoto(photo: Photo, template: Template): Promise<Blob> {
+  const { width, height, photo: box, text } = template
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
   const ctx = canvas.getContext('2d')!
-  const scale = Math.max(width / bitmap.width, height / bitmap.height)
-  const w = bitmap.width * scale
-  const h = bitmap.height * scale
-  ctx.drawImage(bitmap, (width - w) / 2, (height - h) / 2, w, h)
+
+  ctx.fillStyle = template.background
+  ctx.fillRect(0, 0, width, height)
+
+  const bitmap = await createImageBitmap(photo.file)
+  const crop = resolveCrop(photo, box)
+  const s = coverScale(photo, box) * crop.zoom
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(box.x, box.y, box.w, box.h)
+  ctx.clip()
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(bitmap, box.x + crop.ox, box.y + crop.oy, photo.width * s, photo.height * s)
+  ctx.restore()
   bitmap.close()
 
-  const blob = await new Promise<Blob>((resolve, reject) =>
+  if (photo.text.trim()) {
+    ctx.font = templateFont(template)
+    ctx.fillStyle = text.color
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(photo.text, text.x + text.w / 2, text.y + text.lineHeight / 2, text.w)
+  }
+
+  return new Promise<Blob>((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Export failed'))), 'image/jpeg', 0.92),
   )
-  return new File([blob], `chromate-${format}-${String(index + 1).padStart(2, "0")}.jpg`, { type: 'image/jpeg' })
 }
 
 // Saves via the share sheet (iOS "Save Images" → Photos); falls back to file downloads.
 export async function exportAll(photos: Photo[], format: Format) {
+  const template = TEMPLATES[format]
+  await document.fonts.load(templateFont(template))
+
   const files: File[] = []
-  for (const [i, photo] of photos.entries()) files.push(await renderPhoto(photo, format, i))
+  for (const [i, photo] of photos.entries()) {
+    const blob = await renderPhoto(photo, template)
+    files.push(new File([blob], `chromate-${format}-${String(i + 1).padStart(2, '0')}.jpg`, { type: 'image/jpeg' }))
+  }
 
   if (navigator.canShare?.({ files })) {
     try {

@@ -69,5 +69,10 @@ When the user describes a feature that needs an extra library or model, list wha
 - [ ] GitHub repo and Vercel deploy
 - [x] Figma MCP connected
 - [x] Landing screen from Figma, node 1:2
+- [x] Grid screen from Figma, node 1:2131, with Add more
+- [x] Story template from Figma, node 1:9542, lives in `src/lib/templates.ts`
+- [ ] Post template, a provisional layout for now
+- [ ] Reorder and delete
+- [ ] Expanded view with swipe
 
 Dev server: `npx vite --port 5173 --host`

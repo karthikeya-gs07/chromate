@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import PlusGrid from '../components/PlusGrid'
 import GlassButton from '../components/GlassButton'
+import TemplateView from '../components/TemplateView'
+import TextSheet from '../components/TextSheet'
 import backIcon from '../assets/back.svg'
 import downloadIcon from '../assets/download.svg'
 import plusIcon from '../assets/add.svg'
 import { FORMATS, MAX_PHOTOS, type Format, type Photo } from '../lib/formats'
+import { TEMPLATES } from '../lib/templates'
 import { exportAll } from '../lib/exportImages'
 
 type Props = {
@@ -12,15 +15,21 @@ type Props = {
   photos: Photo[]
   onBack: () => void
   onAddMore: () => void
+  onUpdatePhoto: (id: string, patch: Partial<Photo>) => void
   onDownloaded: () => void
 }
 
 // Figma: Grid view (node 1:2131)
-export default function PhotoGrid({ format, photos, onBack, onAddMore, onDownloaded }: Props) {
-  const { plural, width, height } = FORMATS[format]
+export default function PhotoGrid({ format, photos, onBack, onAddMore, onUpdatePhoto, onDownloaded }: Props) {
+  const { label, plural } = FORMATS[format]
+  const template = TEMPLATES[format]
   const [busy, setBusy] = useState(false)
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [textId, setTextId] = useState<string | null>(null)
+  const textPhoto = photos.find((p) => p.id === textId)
 
   async function downloadAll() {
+    setActiveId(null)
     setBusy(true)
     try {
       await exportAll(photos, format)
@@ -31,7 +40,7 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onDownloa
   }
 
   return (
-    <main className="relative min-h-dvh bg-black">
+    <main className="relative min-h-dvh bg-black" onClick={() => setActiveId(null)}>
       <PlusGrid className="fixed" />
 
       <header className="relative px-[30px] pt-[calc(env(safe-area-inset-top)+36px)]">
@@ -47,7 +56,7 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onDownloa
 
       <ul className="relative grid grid-cols-2 gap-6 px-[30px] pt-9 pb-[calc(max(env(safe-area-inset-bottom),34px)+140px)]">
         {photos.length < MAX_PHOTOS && (
-          <li style={{ aspectRatio: `${width} / ${height}` }}>
+          <li style={{ aspectRatio: `${template.width} / ${template.height}` }}>
             <GlassButton
               onClick={onAddMore}
               className="flex size-full flex-col items-center justify-center gap-3 rounded-none"
@@ -61,12 +70,15 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onDownloa
           </li>
         )}
         {photos.map((photo, i) => (
-          <li key={photo.id} className="overflow-hidden bg-white" style={{ aspectRatio: `${width} / ${height}` }}>
-            <img
-              src={photo.url}
-              alt={`${FORMATS[format].label} ${i + 1}`}
-              className="size-full object-cover"
-              decoding="async"
+          <li key={photo.id} onClick={(e) => e.stopPropagation()}>
+            <TemplateView
+              template={template}
+              photo={photo}
+              label={`${label} ${i + 1}`}
+              active={activeId === photo.id}
+              onActivate={() => setActiveId(photo.id)}
+              onCropChange={(crop) => onUpdatePhoto(photo.id, { crop })}
+              onTextTap={() => setTextId(photo.id)}
             />
           </li>
         ))}
@@ -83,6 +95,17 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onDownloa
           <span className="text-[22px] leading-none text-cream">{busy ? 'Preparing…' : 'Download all'}</span>
         </GlassButton>
       </div>
+
+      {textPhoto && (
+        <TextSheet
+          template={template}
+          initial={textPhoto.text}
+          onDone={(text) => {
+            onUpdatePhoto(textPhoto.id, { text })
+            setTextId(null)
+          }}
+        />
+      )}
     </main>
   )
 }
