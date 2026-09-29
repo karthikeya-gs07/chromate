@@ -1,6 +1,7 @@
 import type { Format, Photo } from './formats'
 import { TEMPLATES, templateFont, type Template } from './templates'
 import { coverScale, resolveCrop } from './crop'
+import { wrapLines } from './text'
 
 // Renders one photo into the template at full resolution.
 async function renderPhoto(photo: Photo, template: Template): Promise<Blob> {
@@ -33,7 +34,10 @@ async function renderPhoto(photo: Photo, template: Template): Promise<Blob> {
     if (!value) return
     ctx.textAlign = slot.align
     const x = slot.align === 'left' ? slot.x : slot.align === 'right' ? slot.x + slot.w : slot.x + slot.w / 2
-    ctx.fillText(value, x, slot.y + template.textStyle.lineHeight / 2, slot.w)
+    const { lineHeight } = template.textStyle
+    wrapLines(value, ctx.font, slot.w).forEach((line, n) => {
+      ctx.fillText(line, x, slot.y + lineHeight / 2 + n * lineHeight, slot.w)
+    })
   })
 
   return new Promise<Blob>((resolve, reject) =>

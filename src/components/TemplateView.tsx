@@ -2,14 +2,16 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import type { Crop, Photo } from '../lib/formats'
 import { templateFont, type Template } from '../lib/templates'
 import { clampCrop, coverScale, resolveCrop, zoomAround } from '../lib/crop'
-import { fitText } from '../lib/text'
+import { fitText, wrapLines } from '../lib/text'
 
 type Props = {
   template: Template
   photo: Photo
   label: string
-  // Editable: photo box takes drag/pinch and the text slot is a live input.
+  // Editable: photo box takes drag/pinch and the text slots are live inputs.
   editable?: boolean
+  // Slot currently being typed into; while set, the photo is locked.
+  editingSlot?: number | null
   onCropChange?: (crop: Crop) => void
   onTextChange?: (slot: number, text: string) => void
   onTextFocus?: (slot: number) => void
@@ -22,6 +24,7 @@ export default function TemplateView({
   photo,
   label,
   editable = false,
+  editingSlot = null,
   onCropChange,
   onTextChange,
   onTextFocus,
@@ -30,6 +33,8 @@ export default function TemplateView({
   const wrapRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
+  const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([])
+  const photoMovable = editable && editingSlot === null
 
   useLayoutEffect(() => {
     const el = wrapRef.current!
@@ -53,7 +58,7 @@ export default function TemplateView({
   }
 
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if (!editable) return
+    if (!photoMovable) return
     try {
       e.currentTarget.setPointerCapture(e.pointerId)
     } catch {
@@ -65,7 +70,7 @@ export default function TemplateView({
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
     const pts = pointers.current
     const prev = pts.get(e.pointerId)
-    if (!editable || !prev || scale === 0) return
+    if (!photoMovable || !prev || scale === 0) return
     // On-screen px per template px (includes any zoom applied by a parent).
     const k = e.currentTarget.getBoundingClientRect().width / box.w
 
@@ -93,7 +98,6 @@ export default function TemplateView({
     left: slot.x,
     top: slot.y,
     width: slot.w,
-    height: slot.h,
     textAlign: slot.align,
     fontSize: textStyle.fontSize,
     lineHeight: `${textStyle.lineHeight}px`,
@@ -111,7 +115,7 @@ export default function TemplateView({
           {/* Photo box */}
           <div
             className="absolute overflow-hidden bg-[#9e9e9e]"
-            style={{ left: box.x, top: box.y, width: box.w, height: box.h, touchAction: editable ? 'none' : 'auto' }}
+            style={{ left: box.x, top: box.y, width: box.w, height: box.h, touchAction: photoMovable ? 'none' : 'auto' }}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -130,31 +134,65 @@ export default function TemplateView({
             />
           </div>
 
-          {/* Text slots: typed into directly, no separate field */}
+          {/* Text slots: typed into directly, no separate field. Text wraps downward. */}
           {slots.map((slot, i) => {
             const value = photo.texts[i]
-            return editable ? (
-              <input
+            const lines = value ? wrapLines(value, font, slot.w) : [slot.placeholder]
+            const height = Math.max(1, lines.length) * textStyle.lineHeight
+            if (!editable) {
+              return (
+                <div key={i} className="absolute whitespace-pre" style={{ ...slotStyle(slot), height, opacity: value ? 1 : 0.5 }}>
+                  {lines.join('\n')}
+                </div>
+              )
+            }
+            return (
+              <textarea
                 key={i}
+                ref={(el) => {
+                  inputRefs.current[i] = el
+                }}
                 value={value}
-                onChange={(e) => onTextChange?.(i, fitText(value, e.target.value, font, slot.w))}
+                rows={1}
+                onChange={(e) => onTextChange?.(i, fitText(value, e.target.value, font, slot.w, slot.maxLines))}
                 onFocus={() => onTextFocus?.(i)}
                 onBlur={onTextBlur}
-                onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    e.currentTarget.blur()
+                  }
+                }}
                 placeholder={slot.placeholder}
                 aria-label={`${slot.placeholder} for ${label}`}
                 data-text-slot={i}
                 enterKeyHint="done"
                 autoComplete="off"
-                className="absolute bg-transparent p-0 outline-none placeholder:text-current placeholder:opacity-50"
-                style={slotStyle(slot)}
+                spellCheck={false}
+                className="absolute resize-none overflow-hidden bg-transparent p-0 break-words whitespace-pre-wrap outline-none placeholder:text-current placeholder:opacity-50"
+                style={{ ...slotStyle(slot), height }}
               />
-            ) : (
-              <span key={i} className="absolute overflow-hidden whitespace-nowrap" style={{ ...slotStyle(slot), opacity: value ? 1 : 0.5 }}>
-                {value || slot.placeholder}
-              </span>
             )
           })}
+
+          {/* Big tap zones below the photo so a tiny text line is easy to hit before zooming in */}
+          {editable &&
+            editingSlot === null &&
+            slots.map((_, i) => {
+              const top = box.y + box.h
+              const left = slots.length === 1 ? 0 : i === 0 ? 0 : template.width / 2
+              return (
+                <button
+                  key={`zone-${i}`}
+                  type="button"
+                  tabIndex={-1}
+                  aria-hidden
+                  onClick={() => inputRefs.current[i]?.focus()}
+                  className="absolute cursor-text"
+                  style={{ left, top, width: template.width / slots.length, height: template.height - top }}
+                />
+              )
+            })}
         </div>
       )}
     </div>

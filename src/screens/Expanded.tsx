@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import PlusGrid from '../components/PlusGrid'
 import TemplateView from '../components/TemplateView'
 import { glassSurface } from '../components/GlassButton'
@@ -16,120 +16,110 @@ type Props = {
 
 const LAYOUTS: TextLayout[] = ['single', 'double']
 
+function blurText() {
+  const el = document.activeElement
+  if (el instanceof HTMLTextAreaElement) el.blur()
+}
+
 // Figma: Expanded view (node 1:5852)
+//
+// Typing zoom: instead of animating a CSS transform (which fights iOS's own keyboard scrolling),
+// the stage becomes a vertical scroller and the template is simply laid out larger, so the text
+// slot spans the screen width. The user can slide up/down natively; the photo is locked meanwhile.
 export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }: Props) {
   const template = TEMPLATES[format]
   const stageRef = useRef<HTMLDivElement>(null)
-  const [previewWidth, setPreviewWidth] = useState(0)
-  // Index of the text slot being typed into, or null.
+  const [stage, setStage] = useState({ width: 0, height: 0 })
   const [editingSlot, setEditingSlot] = useState<number | null>(null)
   const editing = editingSlot !== null
-  const [zoom, setZoom] = useState<{ transform: string; origin: string } | null>(null)
+  const slot = editing ? template.slots[photo.layout][editingSlot] : null
 
-  // Fit the template inside the stage (width- or height-limited).
   useLayoutEffect(() => {
     const el = stageRef.current!
-    const ro = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect
-      setPreviewWidth(Math.floor(Math.min(width, (height * template.width) / template.height)))
-    })
+    const ro = new ResizeObserver(([entry]) => setStage({ width: entry.contentRect.width, height: entry.contentRect.height }))
     ro.observe(el)
     return () => ro.disconnect()
-  }, [template.width, template.height])
+  }, [])
 
-  // Zoom so the text slot fills the screen width, placed in the area above the keyboard.
-  const computeZoom = useCallback(() => {
-    const stage = stageRef.current
-    const slot = editingSlot === null ? null : template.slots[photo.layout][editingSlot]
-    if (!stage || !slot || previewWidth === 0) return
-    // Untransformed preview position: centered in the stage's content box, top-aligned.
-    const rect = stage.getBoundingClientRect()
-    const cs = getComputedStyle(stage)
-    const padL = parseFloat(cs.paddingLeft)
-    const padR = parseFloat(cs.paddingRight)
-    const left = rect.left + padL + (rect.width - padL - padR - previewWidth) / 2
-    const top = rect.top + parseFloat(cs.paddingTop)
+  // Normal: fit inside the stage. Editing: slot fills the screen width minus 16px each side.
+  const fitWidth = Math.floor(Math.min(stage.width, (stage.height * template.width) / template.height))
+  const zoomScale = slot ? (window.innerWidth - 32) / slot.w : 0
+  const previewWidth = slot ? template.width * zoomScale : fitWidth
+  const previewLeft = slot ? window.innerWidth / 2 - (slot.x + slot.w / 2) * zoomScale : 0
 
-    const s = previewWidth / template.width
-    const cx = (slot.x + slot.w / 2) * s
-    const cy = (slot.y + slot.h / 2) * s
-    const z = (window.innerWidth - 32) / (slot.w * s)
-    const vv = window.visualViewport
-    const targetY = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) * 0.4
-    setZoom({
-      transform: `translate(${window.innerWidth / 2 - (left + cx)}px, ${targetY - (top + cy)}px) scale(${z})`,
-      origin: `${cx}px ${cy}px`,
-    })
-  }, [previewWidth, template, photo.layout, editingSlot])
-
-  useEffect(() => {
-    if (!editing) {
-      setZoom(null)
-      return
+  // On entering edit mode, scroll so the text line sits in the upper part of the visible area.
+  useLayoutEffect(() => {
+    if (!slot) return
+    const el = stageRef.current!
+    const place = () => {
+      const visible = window.visualViewport?.height ?? window.innerHeight
+      el.scrollTop = slot.y * zoomScale - visible * 0.3
     }
-    computeZoom()
+    place()
+    // Once more after the keyboard has finished opening.
+    const t = window.setTimeout(place, 350)
+    return () => window.clearTimeout(t)
+  }, [slot, zoomScale])
+
+  // Keyboard dismissed without blur (e.g. Android back button): finish editing.
+  useEffect(() => {
     const vv = window.visualViewport
-    if (!vv) return
+    if (!editing || !vv) return
     let keyboardSeen = false
     const onResize = () => {
-      // Keyboard dismissed without blur (e.g. Android back button): finish editing.
       if (vv.height < window.innerHeight * 0.85) keyboardSeen = true
       else if (keyboardSeen) blurText()
-      computeZoom()
     }
     vv.addEventListener('resize', onResize)
-    vv.addEventListener('scroll', computeZoom)
-    return () => {
-      vv.removeEventListener('resize', onResize)
-      vv.removeEventListener('scroll', computeZoom)
-    }
-  }, [editing, computeZoom])
+    return () => vv.removeEventListener('resize', onResize)
+  }, [editing])
 
-  function blurText() {
-    const el = document.activeElement
-    if (el instanceof HTMLInputElement) el.blur()
-  }
-
-  function setText(slot: number, text: string) {
+  function setText(i: number, text: string) {
     const texts: [string, string] = [...photo.texts]
-    texts[slot] = text
+    texts[i] = text
     onUpdatePhoto(photo.id, { texts })
   }
 
   const layoutIndex = LAYOUTS.indexOf(photo.layout)
-  const title = `${photo.layout === 'single' ? 'Single' : 'Double'} ${FORMATS[format].label}`
-  const hideWhileEditing = `transition-opacity duration-300 ${editing ? 'pointer-events-none opacity-0' : ''}`
 
   return (
-    <main
-      className="relative flex h-dvh flex-col overflow-hidden bg-black"
-      // Tapping anywhere outside the text while typing closes the keyboard.
-      onPointerDownCapture={(e) => {
-        if (editing && !(e.target instanceof HTMLElement && e.target.dataset.textSlot)) {
-          e.preventDefault()
-          blurText()
-        }
-      }}
-    >
+    <main className="relative flex h-dvh flex-col overflow-hidden bg-black">
       <PlusGrid className="absolute" />
 
-      <header className={`relative z-10 px-[30px] pt-[calc(env(safe-area-inset-top)+36px)] ${hideWhileEditing}`}>
+      <header className={`relative z-10 px-[30px] pt-[calc(env(safe-area-inset-top)+36px)] ${editing ? 'hidden' : ''}`}>
         <button type="button" onClick={onBack} className="-m-2.5 flex min-h-11 cursor-pointer items-center gap-[15px] p-2.5">
           <img src={backIcon} alt="" width={24} height={24} />
-          <span className="text-xl leading-[0.85] text-cream">{title}</span>
+          <span className="text-xl leading-[0.85] text-cream">Back</span>
         </button>
       </header>
 
-      <div ref={stageRef} className="relative flex min-h-0 flex-1 justify-center px-9 pt-9 pb-[37px]">
+      <div
+        ref={stageRef}
+        // Tapping (not scrolling) anywhere outside the text finishes typing.
+        onClick={(e) => {
+          if (editing && !(e.target instanceof HTMLTextAreaElement)) blurText()
+        }}
+        className={
+          editing
+            ? 'relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pt-[calc(env(safe-area-inset-top)+16px)]'
+            : 'relative flex min-h-0 flex-1 justify-center px-9 pt-9 pb-[37px]'
+        }
+      >
         <div
-          className="relative self-start transition-transform duration-300 ease-out"
-          style={{ width: previewWidth, transform: zoom?.transform, transformOrigin: zoom?.origin }}
+          className="relative self-start"
+          style={{
+            width: previewWidth,
+            marginLeft: editing ? previewLeft : undefined,
+            // Room to scroll the text line up above the keyboard.
+            marginBottom: editing ? '60dvh' : undefined,
+          }}
         >
           <TemplateView
             template={template}
             photo={photo}
             label={`${FORMATS[format].label} ${index + 1}`}
             editable
+            editingSlot={editingSlot}
             onCropChange={(crop) => onUpdatePhoto(photo.id, { crop })}
             onTextChange={setText}
             onTextFocus={setEditingSlot}
@@ -138,8 +128,19 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
         </div>
       </div>
 
+      {editing && (
+        <button
+          type="button"
+          onPointerDown={(e) => e.preventDefault()}
+          onClick={blurText}
+          className="absolute top-[calc(env(safe-area-inset-top)+12px)] right-4 z-20 min-h-11 cursor-pointer rounded-full bg-cream px-5 text-base text-black"
+        >
+          Done
+        </button>
+      )}
+
       {/* Single / double toggle */}
-      <div className={`relative rounded-t-[35px] bg-black px-[13px] pt-2.5 pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)] ${hideWhileEditing}`}>
+      <div className={`relative rounded-t-[35px] bg-black px-[13px] pt-2.5 pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)] ${editing ? 'hidden' : ''}`}>
         <div role="radiogroup" aria-label="Text layout" className={`${glassSurface} relative grid h-24 grid-cols-2 px-2 py-1.5`}>
           <span
             aria-hidden
