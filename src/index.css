@@ -17,6 +17,15 @@
   --color-paper: #f5f5f0;
   --color-muted: #8a8a85;
   --color-line: #232326;
+
+  /* From Figma landing (node 1:2) */
+  --color-cream: #fff0c1;
+  --color-sand: #cecabf;
+  --color-title-end: #5d5744;
+  --color-bg-end: #a89a7a;
+  --color-card-border: rgb(168 154 123 / 0.5);
+  --color-card-fill: rgb(83 80 65 / 0.3);
+  --radius-card: 30px;
 }
 
 html,

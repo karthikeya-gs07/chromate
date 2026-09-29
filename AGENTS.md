@@ -61,7 +61,13 @@ When the user describes a feature that needs an extra library or model, list wha
 
 ## Project status
 
-- [ ] Project brief from the user
-- [ ] Stack confirmed
-- [ ] Repo and Vercel set up
+- [x] Project brief from the user
+- [x] Stack set up: React, Vite, TypeScript, Tailwind v4, vite-plugin-pwa
+- [x] Phone-only gate, with QR code and Copy link
+- [x] Nohemi font in `public/fonts`
+- [x] Local Git repo
+- [ ] GitHub repo and Vercel deploy
 - [ ] Figma MCP connected
+- [ ] Landing screen from Figma, node 1:2 (a placeholder for now)
+
+Dev server: `npx vite --port 5173 --host`
