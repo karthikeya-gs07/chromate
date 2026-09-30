@@ -1,5 +1,6 @@
 import FormatCard from '../components/FormatCard'
 import PlusGrid from '../components/PlusGrid'
+import WaveBackground from '../components/WaveBackground'
 import type { Format } from '../lib/formats'
 
 type Props = {
@@ -9,18 +10,17 @@ type Props = {
 // Figma: Landing (node 1:2)
 export default function Landing({ onSelectFormat }: Props) {
   return (
-    <main className="relative flex min-h-dvh flex-col overflow-hidden bg-linear-to-b from-black from-[22%] to-bg-end px-3 pt-[max(calc(env(safe-area-inset-top)+24px),15.5dvh)] pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)]">
+    <main className="relative flex min-h-dvh flex-col overflow-hidden bg-black px-3 pt-[max(calc(env(safe-area-inset-top)+25px),9.9dvh)] pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)]">
+      <WaveBackground />
       <PlusGrid className="absolute" />
 
       <header className="relative pl-5">
-        <h1 className="-mt-[0.1em] bg-linear-to-b from-cream to-title-end bg-clip-text pt-[0.1em] text-[clamp(64px,min(30.5vw,14dvh),140px)] leading-[0.85] text-transparent">
+        <h1 className="-mt-[0.1em] bg-linear-to-b from-cream to-title-end bg-clip-text pt-[0.1em] text-[59px] leading-[0.85] text-transparent">
           Chro
           <br />
           mate
         </h1>
-        <p className="mt-[15px] max-w-[213px] pl-1 text-[19px] leading-[1.1] text-cream/40">
-          Karthikeya's way of storytelling
-        </p>
+        <p className="mt-2 text-[19px] leading-[1.2] whitespace-nowrap text-cream/40">Every story matters</p>
       </header>
 
       <div className="relative mt-auto grid grid-cols-2 gap-3 pt-10">
