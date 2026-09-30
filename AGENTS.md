@@ -49,6 +49,11 @@ A personal tool for Karthikeya to make Instagram stories and posts from their ow
 
 Skip step 2 only for tiny, unambiguous changes (typo, color tweak).
 
+## Pushing and deploying
+
+- **Never `git push` or deploy unless the user asks in that message.** A push to `main` goes live on Vercel automatically.
+- Committing locally is fine. When work is ready, say "Ready to push" and wait.
+
 ## Stack and hosting
 
 - Repo: Git on GitHub
