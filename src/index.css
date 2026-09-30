@@ -44,25 +44,6 @@ body {
   overscroll-behavior: none;
 }
 
-/* Landing wave background */
-@keyframes wave-drift {
-  to {
-    transform: translateX(-50%);
-  }
-}
-@keyframes wave-bob {
-  50% {
-    transform: translateY(3%);
-  }
-}
-.wave-drift {
-  animation: wave-drift linear infinite;
-  will-change: transform;
-}
-.wave-bob {
-  animation: wave-bob ease-in-out infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
