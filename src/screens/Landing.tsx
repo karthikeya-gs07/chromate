@@ -2,6 +2,7 @@ import FormatCard from '../components/FormatCard'
 import PlusGrid from '../components/PlusGrid'
 import type { Format } from '../lib/formats'
 import useClock from '../hooks/useClock'
+import { postTimingMessage } from '../lib/postTiming'
 
 type Props = {
   onSelectFormat: (format: Format) => void
@@ -33,7 +34,7 @@ export default function Landing({ onSelectFormat }: Props) {
           <br />
           {period}
         </time>
-        <p className="mt-2 text-[19px] leading-[1.2] whitespace-nowrap text-cream/40">Every story matters</p>
+        <p className="mt-2 text-[19px] leading-[1.2] whitespace-nowrap text-cream/40">{postTimingMessage(now)}</p>
       </header>
 
       <div className="relative mt-auto grid grid-cols-2 gap-3 pt-10">
