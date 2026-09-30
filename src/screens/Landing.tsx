@@ -11,7 +11,7 @@ type Props = {
 // Figma: Landing (node 1:2)
 export default function Landing({ onSelectFormat }: Props) {
   const now = useClock()
-  // e.g. "9:41" and "PM", shown on two lines where the Chro/mate title used to be.
+  // e.g. "9:41 PM", shown on one line where the Chro/mate title used to be.
   const parts = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).formatToParts(now)
   const time = parts
     .filter((p) => p.type === 'hour' || p.type === 'minute' || p.type === 'literal')
@@ -28,11 +28,9 @@ export default function Landing({ onSelectFormat }: Props) {
         <h1 className="sr-only">Chromate</h1>
         <time
           dateTime={now.toISOString()}
-          className="-mt-[0.1em] block bg-linear-to-b from-cream to-title-end bg-clip-text pt-[0.1em] text-[59px] leading-[0.85] text-transparent tabular-nums"
+          className="-mt-[0.1em] block bg-linear-to-b from-cream to-title-end bg-clip-text pt-[0.1em] text-[59px] leading-[0.85] whitespace-nowrap text-transparent tabular-nums"
         >
-          {time}
-          <br />
-          {period}
+          {time} {period}
         </time>
         <p className="mt-2 text-[19px] leading-[1.2] whitespace-nowrap text-cream/40">{postTimingMessage(now)}</p>
       </header>

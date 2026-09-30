@@ -56,7 +56,9 @@ export default function TemplateView({
   const s = coverScale(photo, box) * crop.zoom
   // Latest crop between renders, so fast pointer events don't drop movement.
   const cropRef = useRef(crop)
-  cropRef.current = crop
+  useLayoutEffect(() => {
+    cropRef.current = crop
+  })
 
   function update(next: Crop) {
     cropRef.current = next
