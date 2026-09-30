@@ -9,7 +9,7 @@ type Props = {
 // Figma: Landing (node 1:2)
 export default function Landing({ onSelectFormat }: Props) {
   return (
-    <main className="relative flex min-h-dvh flex-col overflow-hidden bg-linear-to-b from-black from-[22%] to-bg-end px-3 pt-[max(calc(env(safe-area-inset-top)+25px),9.9dvh)] pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)]">
+    <main className="relative flex min-h-dvh flex-col overflow-hidden bg-linear-to-b from-black from-[22%] to-bg-end px-3 pt-[max(calc(env(safe-area-inset-top)+65px),14.6dvh)] pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)]">
       <PlusGrid className="absolute" />
 
       <header className="relative pl-5">
