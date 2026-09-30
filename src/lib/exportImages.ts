@@ -3,13 +3,17 @@ import { TEMPLATES, templateFont, type Template } from './templates'
 import { coverScale, resolveCrop } from './crop'
 import { wrapLines } from './text'
 
-// Renders one photo into the template at full resolution.
+// Export at 2× the template size (story: 2160×3840). Layout stays in template pixels.
+const EXPORT_SCALE = 2
+
+// Renders one photo into the template at EXPORT_SCALE resolution.
 async function renderPhoto(photo: Photo, template: Template): Promise<Blob> {
   const { width, height, photo: box } = template
   const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
+  canvas.width = width * EXPORT_SCALE
+  canvas.height = height * EXPORT_SCALE
   const ctx = canvas.getContext('2d')!
+  ctx.scale(EXPORT_SCALE, EXPORT_SCALE)
 
   ctx.fillStyle = template.background
   ctx.fillRect(0, 0, width, height)
