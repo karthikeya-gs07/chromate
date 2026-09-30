@@ -13,6 +13,8 @@ type Props = {
   // Slot currently being typed into; while set, the photo is locked.
   editingSlot?: number | null
   onCropChange?: (crop: Crop) => void
+  // Double-tap on the photo: back to centered, no zoom.
+  onCropReset?: () => void
   onTextChange?: (slot: number, text: string) => void
   onTextFocus?: (slot: number) => void
   onTextBlur?: () => void
@@ -26,6 +28,7 @@ export default function TemplateView({
   editable = false,
   editingSlot = null,
   onCropChange,
+  onCropReset,
   onTextChange,
   onTextFocus,
   onTextBlur,
@@ -33,6 +36,9 @@ export default function TemplateView({
   const wrapRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
+  // Tap tracking for double-tap reset: where the current touch started, and the last tap.
+  const tapStart = useRef<{ x: number; y: number; multi: boolean } | null>(null)
+  const lastTap = useRef({ time: 0, x: 0, y: 0 })
   const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([])
   const photoMovable = editable && editingSlot === null
 
@@ -65,6 +71,8 @@ export default function TemplateView({
       // Pointer already gone; ignore.
     }
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (pointers.current.size === 1) tapStart.current = { x: e.clientX, y: e.clientY, multi: false }
+    else if (tapStart.current) tapStart.current.multi = true
   }
 
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
@@ -91,6 +99,19 @@ export default function TemplateView({
 
   function onPointerUp(e: React.PointerEvent<HTMLDivElement>) {
     pointers.current.delete(e.pointerId)
+    const start = tapStart.current
+    if (!start || pointers.current.size > 0) return
+    tapStart.current = null
+    // A tap = one finger that barely moved.
+    if (start.multi || Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) return
+    const now = e.timeStamp
+    const last = lastTap.current
+    if (now - last.time < 320 && Math.hypot(e.clientX - last.x, e.clientY - last.y) < 40) {
+      lastTap.current = { time: 0, x: 0, y: 0 }
+      onCropReset?.()
+    } else {
+      lastTap.current = { time: now, x: e.clientX, y: e.clientY }
+    }
   }
 
   const { textStyle } = template
@@ -119,7 +140,10 @@ export default function TemplateView({
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
+            onPointerCancel={(e) => {
+              pointers.current.delete(e.pointerId)
+              tapStart.current = null
+            }}
           >
             <img
               src={photo.url}

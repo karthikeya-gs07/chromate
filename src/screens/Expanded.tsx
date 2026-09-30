@@ -121,6 +121,7 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
             editable
             editingSlot={editingSlot}
             onCropChange={(crop) => onUpdatePhoto(photo.id, { crop })}
+            onCropReset={() => onUpdatePhoto(photo.id, { crop: null })}
             onTextChange={setText}
             onTextFocus={setEditingSlot}
             onTextBlur={() => setEditingSlot(null)}
