@@ -39,7 +39,8 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPho
     <main className="relative min-h-dvh bg-black">
       <PlusGrid className="fixed" />
 
-      <header className="relative px-[30px] pt-[calc(env(safe-area-inset-top)+36px)]">
+      {/* Fixed title bar: only the thumbnails scroll */}
+      <header className="sticky top-0 z-10 rounded-b-[35px] bg-black px-[30px] pt-[calc(env(safe-area-inset-top)+36px)] pb-5">
         <button
           type="button"
           onClick={onBack}
@@ -50,7 +51,7 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPho
         </button>
       </header>
 
-      <ul className="relative grid grid-cols-2 gap-6 px-[30px] pt-9 pb-[calc(max(env(safe-area-inset-bottom),34px)+140px)]">
+      <ul className="relative grid grid-cols-2 gap-6 px-[30px] pt-4 pb-[calc(max(env(safe-area-inset-bottom),34px)+140px)]">
         {photos.length < MAX_PHOTOS && (
           <li style={{ aspectRatio: `${template.width} / ${template.height}` }}>
             {/* Figma: Add more tile (node 1:11392). Sizes in cqw so it scales with the tile (155px wide in Figma). */}
