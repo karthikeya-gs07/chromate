@@ -8,25 +8,29 @@ Also read before any work:
 
 ## What the app does
 
-A personal tool for Karthikeya to make Instagram stories and posts from their own photos.
+A personal tool for Karthikeya to make Instagram stories from their own photos.
 
-1. **Choose a format:** Story (1080×1920) or Post (1080×1350).
-2. **Choose a template:** the template page. There's 1 template for now, and it's built so more can be added later.
-3. **Pick photos:** open the phone gallery, select up to 10 photos, then tap Update.
-4. **Place the photos:** each photo fills the template's gray box, and the part outside the box is cropped.
-5. **Browse the grid:** a scrollable 2×N grid. You can:
-   - drag a photo inside its gray box, and pinch to zoom it
-   - reorder the tiles
-   - delete a tile
-6. **Expand one:** tap a tile for the full view. From there you can:
-   - swipe left and right between photos
-   - adjust the photo (drag and zoom)
-   - add text that's unique to each image, styled by the template in Figma
-7. **Download all:** save every image to Photos, using the Share sheet on iOS.
+**Flow:** Landing → Story → **Templates** → the template's editor → **Buffer** → Save all
+
+1. **Landing:** choose Story (1080×1920) or Post. Post is on hold and shows a "Posts are coming soon" message.
+2. **Templates page:** the story templates. Each is listed in `STORY_TEMPLATES` in `src/lib/templates.ts`.
+   - **Batch** (first): pick up to 10 photos and see them in a 2×N grid. Tap a tile to open it full screen. Each tile has ✕ to delete, and the grid has **Add to buffer** and **Download all**.
+   - **Photo + text**: an empty template. Tap the gray box to pick a photo, then:
+     - choose single or double text, and type straight into the template
+     - drag and pinch the photo, or double-tap to reset it
+     - use the ↻ corner button to change the photo
+     - tap **Download** or **Add to buffer**
+   - After **Add to buffer**, the editor stays open, so you can swap the photo and add another story.
+3. **Buffer:** a cart of finished stories, at most 10. The panel slides in from the left, and the button for it is at the top right of every screen.
+   - Tap a story to re-open it ("Update buffer").
+   - Tap ✕ to delete it.
+   - **Save all** saves every story at once, then empties the buffer.
+   - It's stored in the app's private IndexedDB, only for the session. It's never sent anywhere, survives iOS killing the app in the background, is deleted after Save all, and expires after 12h.
+4. **Coming later:** templates with several photo boxes (gray boxes = photo slots). The user gives the specs for each template.
 
 **Rules:**
 - **Font:** Nohemi (the user provides the files).
-- **No storage:** no saving, no users, no backend. Everything runs on the phone.
+- **No server:** no accounts, no backend. Everything runs on the phone, and only the buffer is kept temporarily, in the app's IndexedDB.
 - **Leave warning:** warn before you leave or refresh if there's work that hasn't been downloaded.
 - **Templates are data:** so new ones can be added without rewriting the app.
 
@@ -81,6 +85,7 @@ When the user describes a feature that needs an extra library or model, list wha
 - [x] Delete (✕ on each tile). No reorder, by decision.
 - [x] Expanded view from Figma, node 1:5852: single/double toggle, typing straight into the text area with zoom
 - [ ] Swipe between photos in the expanded view
+- [x] Templates page, single-photo editor and buffer side panel (branch `templates-and-buffer`)
 - [x] Double layout from Figma, node 1:9537
 
 Dev server: `npx vite --port 5173 --host`

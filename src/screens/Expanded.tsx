@@ -1,17 +1,22 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import PlusGrid from '../components/PlusGrid'
 import TemplateView from '../components/TemplateView'
+import BufferButton from '../components/BufferButton'
 import { glassSurface } from '../components/GlassButton'
 import backIcon from '../assets/back.svg'
-import { FORMATS, type Format, type Photo, type TextLayout } from '../lib/formats'
+import { type Format, type Photo, type TextLayout } from '../lib/formats'
 import { TEMPLATES } from '../lib/templates'
 
 type Props = {
   format: Format
   photo: Photo
-  index: number
+  label: string
   onBack: () => void
-  onUpdatePhoto: (id: string, patch: Partial<Photo>) => void
+  onChange: (patch: Partial<Photo>) => void
+  // Pick or replace the image. Shows "Tap to add a photo" when empty and a replace button when set.
+  onPickPhoto?: () => void
+  // Extra actions under the single/double toggle (e.g. Download / Add to buffer).
+  actions?: ReactNode
 }
 
 const LAYOUTS: TextLayout[] = ['single', 'double']
@@ -21,12 +26,12 @@ function blurText() {
   if (el instanceof HTMLTextAreaElement) el.blur()
 }
 
-// Figma: Expanded view (node 1:5852)
+// Figma: Expanded view (node 1:5852). Full-screen editor for one story.
 //
 // Typing zoom: instead of animating a CSS transform (which fights iOS's own keyboard scrolling),
 // the stage becomes a vertical scroller and the template is simply laid out larger, so the text
 // slot spans the screen width. The user can slide up/down natively; the photo is locked meanwhile.
-export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }: Props) {
+export default function Expanded({ format, photo, label, onBack, onChange, onPickPhoto, actions }: Props) {
   const template = TEMPLATES[format]
   const stageRef = useRef<HTMLDivElement>(null)
   const [stage, setStage] = useState({ width: 0, height: 0 })
@@ -77,7 +82,7 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
   function setText(i: number, text: string) {
     const texts: [string, string] = [...photo.texts]
     texts[i] = text
-    onUpdatePhoto(photo.id, { texts })
+    onChange({ texts })
   }
 
   const layoutIndex = LAYOUTS.indexOf(photo.layout)
@@ -86,11 +91,14 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
     <main className="relative flex h-dvh flex-col overflow-hidden bg-black">
       <PlusGrid className="absolute" />
 
-      <header className={`relative z-10 px-[30px] pt-[calc(env(safe-area-inset-top)+36px)] ${editing ? 'hidden' : ''}`}>
+      <header
+        className={`relative z-10 flex items-center justify-between px-[30px] pt-[calc(env(safe-area-inset-top)+26px)] ${editing ? 'hidden' : ''}`}
+      >
         <button type="button" onClick={onBack} className="-m-2.5 flex min-h-11 cursor-pointer items-center gap-[15px] p-2.5">
           <img src={backIcon} alt="" width={24} height={24} />
           <span className="text-xl leading-[0.85] text-cream">Back</span>
         </button>
+        <BufferButton className="-mr-2.5" />
       </header>
 
       <div
@@ -102,7 +110,7 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
         className={
           editing
             ? 'relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pt-[calc(env(safe-area-inset-top)+16px)]'
-            : 'relative flex min-h-0 flex-1 justify-center px-9 pt-9 pb-[37px]'
+            : 'relative flex min-h-0 flex-1 justify-center px-9 pt-[26px] pb-6'
         }
       >
         <div
@@ -117,15 +125,38 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
           <TemplateView
             template={template}
             photo={photo}
-            label={`${FORMATS[format].label} ${index + 1}`}
+            label={label}
             editable
             editingSlot={editingSlot}
-            onCropChange={(crop) => onUpdatePhoto(photo.id, { crop })}
-            onCropReset={() => onUpdatePhoto(photo.id, { crop: null })}
+            onCropChange={(crop) => onChange({ crop })}
+            onCropReset={() => onChange({ crop: null })}
+            onPhotoTap={onPickPhoto}
             onTextChange={setText}
             onTextFocus={setEditingSlot}
             onTextBlur={() => setEditingSlot(null)}
           />
+
+          {/* Replace photo: same corner-button pattern as delete on grid tiles */}
+          {onPickPhoto && photo.file && !editing && (
+            <button
+              type="button"
+              onClick={onPickPhoto}
+              aria-label="Change photo"
+              className="absolute -top-[13px] -right-[13px] flex size-11 cursor-pointer items-center justify-center"
+            >
+              <span className="flex size-8 items-center justify-center rounded-full border border-card-border bg-black/80 backdrop-blur-[5.2px] transition-transform active:scale-90">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M4 12a8 8 0 0 1 13.66-5.66L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.66 5.66L4 15.5M4 20v-4.5h4.5"
+                    stroke="#FFF0C1"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -140,9 +171,11 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
         </button>
       )}
 
-      {/* Single / double toggle */}
-      <div className={`relative rounded-t-[35px] bg-black px-[13px] pt-2.5 pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)] ${editing ? 'hidden' : ''}`}>
-        <div role="radiogroup" aria-label="Text layout" className={`${glassSurface} relative grid h-24 grid-cols-2 px-2 py-1.5`}>
+      {/* Single / double toggle, plus any extra actions */}
+      <div
+        className={`relative flex flex-col gap-2.5 rounded-t-[35px] bg-black px-[13px] pt-2.5 pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)] ${editing ? 'hidden' : ''}`}
+      >
+        <div role="radiogroup" aria-label="Text layout" className={`${glassSurface} relative grid h-[clamp(64px,11.3dvh,96px)] grid-cols-2 px-2 py-1.5`}>
           <span
             aria-hidden
             className="absolute top-1.5 bottom-1.5 left-2 w-[calc(50%-8px)] rounded-[23px] border border-card-border bg-card-fill shadow-[inset_0_-8px_22px_0_rgb(255_245_214/0.1)] backdrop-blur-[5.2px] transition-transform duration-300 ease-out"
@@ -154,13 +187,14 @@ export default function Expanded({ format, photo, index, onBack, onUpdatePhoto }
               type="button"
               role="radio"
               aria-checked={photo.layout === layout}
-              onClick={() => onUpdatePhoto(photo.id, { layout })}
+              onClick={() => onChange({ layout })}
               className={`relative cursor-pointer text-xl text-cream transition-opacity duration-300 ${photo.layout === layout ? '' : 'opacity-50'}`}
             >
               {layout}
             </button>
           ))}
         </div>
+        {actions}
       </div>
     </main>
   )

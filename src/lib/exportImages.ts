@@ -18,7 +18,7 @@ async function renderPhoto(photo: Photo, template: Template): Promise<Blob> {
   ctx.fillStyle = template.background
   ctx.fillRect(0, 0, width, height)
 
-  const bitmap = await createImageBitmap(photo.file)
+  const bitmap = await createImageBitmap(photo.file!)
   const crop = resolveCrop(photo, box)
   const s = coverScale(photo, box) * crop.zoom
   ctx.save()
@@ -50,7 +50,10 @@ async function renderPhoto(photo: Photo, template: Template): Promise<Blob> {
 }
 
 // Saves via the share sheet (iOS "Save Images" → Photos); falls back to file downloads.
-export async function exportAll(photos: Photo[], format: Format) {
+// Returns false if the user cancelled the share sheet, so callers keep their work.
+export async function exportAll(photos: Photo[], format: Format): Promise<boolean> {
+  photos = photos.filter((p) => p.file)
+  if (photos.length === 0) return false
   const template = TEMPLATES[format]
   await document.fonts.load(templateFont(template))
 
@@ -63,9 +66,9 @@ export async function exportAll(photos: Photo[], format: Format) {
   if (navigator.canShare?.({ files })) {
     try {
       await navigator.share({ files })
-      return
+      return true
     } catch (err) {
-      if ((err as DOMException).name === 'AbortError') return
+      if ((err as DOMException).name === 'AbortError') return false
     }
   }
 
@@ -77,4 +80,5 @@ export async function exportAll(photos: Photo[], format: Format) {
     a.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
+  return true
 }

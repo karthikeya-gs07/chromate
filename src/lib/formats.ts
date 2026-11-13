@@ -16,7 +16,8 @@ export type TextLayout = 'single' | 'double'
 
 export type Photo = {
   id: string
-  file: File
+  // null = no image picked yet (empty template in the editor).
+  file: Blob | null
   url: string
   width: number
   height: number

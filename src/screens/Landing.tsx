@@ -1,5 +1,6 @@
 import FormatCard from '../components/FormatCard'
 import PlusGrid from '../components/PlusGrid'
+import BufferButton from '../components/BufferButton'
 import type { Format } from '../lib/formats'
 import useClock from '../hooks/useClock'
 import { postTimingMessage } from '../lib/postTiming'
@@ -23,6 +24,7 @@ export default function Landing({ onSelectFormat }: Props) {
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden bg-linear-to-b from-black from-[22%] to-bg-end px-3 pt-[max(calc(env(safe-area-inset-top)+65px),14.6dvh)] pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)]">
       <PlusGrid className="absolute" />
+      <BufferButton className="absolute! top-[calc(env(safe-area-inset-top)+26px)] right-5 z-10" />
 
       <header className="relative pl-5">
         <h1 className="sr-only">Chromate</h1>

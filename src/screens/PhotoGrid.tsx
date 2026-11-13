@@ -2,6 +2,8 @@ import { useState } from 'react'
 import PlusGrid from '../components/PlusGrid'
 import GlassButton from '../components/GlassButton'
 import TemplateView from '../components/TemplateView'
+import BufferButton from '../components/BufferButton'
+import { BufferIcon } from '../components/icons'
 import backIcon from '../assets/back.svg'
 import downloadIcon from '../assets/download.svg'
 import addIcon from '../assets/add-circle.svg'
@@ -16,22 +18,31 @@ type Props = {
   onAddMore: () => void
   onOpenPhoto: (id: string) => void
   onDeletePhoto: (id: string) => void
+  onAddAllToBuffer: () => Promise<void>
   onDownloaded: () => void
 }
 
 // Figma: Grid view (node 1:2131)
-export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPhoto, onDeletePhoto, onDownloaded }: Props) {
+export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPhoto, onDeletePhoto, onAddAllToBuffer, onDownloaded }: Props) {
   const { label, plural } = FORMATS[format]
   const template = TEMPLATES[format]
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<'download' | 'buffer' | null>(null)
 
   async function downloadAll() {
-    setBusy(true)
+    setBusy('download')
     try {
-      await exportAll(photos, format)
-      onDownloaded()
+      if (await exportAll(photos, format)) onDownloaded()
     } finally {
-      setBusy(false)
+      setBusy(null)
+    }
+  }
+
+  async function addAllToBuffer() {
+    setBusy('buffer')
+    try {
+      await onAddAllToBuffer()
+    } finally {
+      setBusy(null)
     }
   }
 
@@ -40,7 +51,7 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPho
       <PlusGrid className="fixed" />
 
       {/* Fixed title bar: only the thumbnails scroll */}
-      <header className="sticky top-0 z-10 rounded-b-[35px] bg-black px-[30px] pt-[calc(env(safe-area-inset-top)+36px)] pb-5">
+      <header className="sticky top-0 z-10 flex items-center justify-between rounded-b-[35px] bg-black px-[30px] pt-[calc(env(safe-area-inset-top)+26px)] pb-2.5">
         <button
           type="button"
           onClick={onBack}
@@ -49,6 +60,7 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPho
           <img src={backIcon} alt="" width={24} height={24} />
           <span className="text-xl leading-[0.85] text-cream">{plural}</span>
         </button>
+        <BufferButton className="-mr-2.5" />
       </header>
 
       <ul className="relative grid grid-cols-2 gap-6 px-[30px] pt-4 pb-[calc(max(env(safe-area-inset-bottom),34px)+140px)]">
@@ -103,18 +115,25 @@ export default function PhotoGrid({ format, photos, onBack, onAddMore, onOpenPho
         ))}
       </ul>
 
-      {/* Fixed Download all bar */}
-      <div className="fixed inset-x-0 bottom-0 z-10 rounded-t-[35px] bg-black px-[13px] pt-4 pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)]">
+      {/* Fixed action bar: Add all to buffer / Download all */}
+      <div className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-2 gap-2.5 rounded-t-[35px] bg-black px-[13px] pt-4 pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)]">
+        <GlassButton
+          onClick={addAllToBuffer}
+          disabled={busy !== null || photos.length === 0}
+          className="flex h-[90px] items-center justify-center gap-2"
+        >
+          <BufferIcon />
+          <span className="text-lg leading-none text-cream">{busy === 'buffer' ? 'Adding…' : 'Add to buffer'}</span>
+        </GlassButton>
         <GlassButton
           onClick={downloadAll}
-          disabled={busy || photos.length === 0}
-          className="flex h-[90px] w-full items-end justify-center gap-[7px] pb-[33px]"
+          disabled={busy !== null || photos.length === 0}
+          className="flex h-[90px] items-center justify-center gap-[7px]"
         >
           <img src={downloadIcon} alt="" width={27} height={24} />
-          <span className="text-[22px] leading-none text-cream">{busy ? 'Preparing…' : 'Download all'}</span>
+          <span className="text-lg leading-none text-cream">{busy === 'download' ? 'Preparing…' : 'Download all'}</span>
         </GlassButton>
       </div>
-
     </main>
   )
 }

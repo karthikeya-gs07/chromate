@@ -15,6 +15,8 @@ type Props = {
   onCropChange?: (crop: Crop) => void
   // Double-tap on the photo: back to centered, no zoom.
   onCropReset?: () => void
+  // Tap on an empty gray box (no image yet): pick a photo.
+  onPhotoTap?: () => void
   onTextChange?: (slot: number, text: string) => void
   onTextFocus?: (slot: number) => void
   onTextBlur?: () => void
@@ -29,6 +31,7 @@ export default function TemplateView({
   editingSlot = null,
   onCropChange,
   onCropReset,
+  onPhotoTap,
   onTextChange,
   onTextFocus,
   onTextBlur,
@@ -40,7 +43,8 @@ export default function TemplateView({
   const tapStart = useRef<{ x: number; y: number; multi: boolean } | null>(null)
   const lastTap = useRef({ time: 0, x: 0, y: 0 })
   const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([])
-  const photoMovable = editable && editingSlot === null
+  const empty = photo.file === null
+  const photoMovable = editable && editingSlot === null && !empty
 
   useLayoutEffect(() => {
     const el = wrapRef.current!
@@ -147,17 +151,36 @@ export default function TemplateView({
               tapStart.current = null
             }}
           >
-            <img
-              src={photo.url}
-              alt={label}
-              draggable={false}
-              className="absolute top-0 left-0 max-w-none origin-top-left select-none"
-              style={{
-                width: photo.width,
-                height: photo.height,
-                transform: `translate(${crop.ox}px, ${crop.oy}px) scale(${s})`,
-              }}
-            />
+            {empty ? (
+              // Template sizes: 1080px canvas, so type here is large (shown scaled down).
+              // Read-only previews (e.g. Templates page) just show the plain gray box.
+              editable && (
+              <button
+                type="button"
+                disabled={!editable || !onPhotoTap}
+                onClick={onPhotoTap}
+                className="flex size-full cursor-pointer flex-col items-center justify-center gap-10 text-white disabled:cursor-default"
+              >
+                <svg width="160" height="160" viewBox="0 0 106 106" fill="none" aria-hidden>
+                  <path d="M35.3333 53H53M53 53H70.6667M53 53V35.3333M53 53V70.6667" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <circle cx="53" cy="53" r="44.1667" stroke="currentColor" strokeWidth="2" />
+                </svg>
+                <span className="text-[52px] leading-none">Tap to add a photo</span>
+              </button>
+              )
+            ) : (
+              <img
+                src={photo.url}
+                alt={label}
+                draggable={false}
+                className="absolute top-0 left-0 max-w-none origin-top-left select-none"
+                style={{
+                  width: photo.width,
+                  height: photo.height,
+                  transform: `translate(${crop.ox}px, ${crop.oy}px) scale(${s})`,
+                }}
+              />
+            )}
           </div>
 
           {/* Text slots: typed into directly, no separate field. Text wraps downward. */}

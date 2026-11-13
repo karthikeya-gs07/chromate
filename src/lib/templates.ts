@@ -60,3 +60,18 @@ const post: Template = {
 export const TEMPLATES: Record<Format, Template> = { story, post }
 
 export const templateFont = (t: Template) => `${t.textStyle.fontWeight} ${t.textStyle.fontSize}px Nohemi`
+
+// Templates the user picks from on the Templates page (Stories only for now).
+// `layout` is the canvas layout above; `kind` decides which editor opens.
+export type CatalogTemplate = {
+  id: string
+  name: string
+  description: string
+  kind: 'batch' | 'single'
+  layout: Format
+}
+
+export const STORY_TEMPLATES: CatalogTemplate[] = [
+  { id: 'batch', name: 'Batch', description: 'Up to 10 photos at once', kind: 'batch', layout: 'story' },
+  { id: 'single-text', name: 'Photo + text', description: 'One photo, single or double text', kind: 'single', layout: 'story' },
+]
