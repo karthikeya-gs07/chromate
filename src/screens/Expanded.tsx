@@ -4,11 +4,10 @@ import TemplateView from '../components/TemplateView'
 import BufferButton from '../components/BufferButton'
 import { glassSurface } from '../components/GlassButton'
 import backIcon from '../assets/back.svg'
-import { type Format, type Photo, type TextLayout } from '../lib/formats'
-import { TEMPLATES } from '../lib/templates'
+import { type Photo, type TextLayout } from '../lib/formats'
+import { templateOf } from '../lib/templates'
 
 type Props = {
-  format: Format
   photo: Photo
   label: string
   onBack: () => void
@@ -31,8 +30,8 @@ function blurText() {
 // Typing zoom: instead of animating a CSS transform (which fights iOS's own keyboard scrolling),
 // the stage becomes a vertical scroller and the template is simply laid out larger, so the text
 // slot spans the screen width. The user can slide up/down natively; the photo is locked meanwhile.
-export default function Expanded({ format, photo, label, onBack, onChange, onPickPhoto, actions }: Props) {
-  const template = TEMPLATES[format]
+export default function Expanded({ photo, label, onBack, onChange, onPickPhoto, actions }: Props) {
+  const template = templateOf(photo)
   const stageRef = useRef<HTMLDivElement>(null)
   const [stage, setStage] = useState({ width: 0, height: 0 })
   const [editingSlot, setEditingSlot] = useState<number | null>(null)
@@ -130,6 +129,7 @@ export default function Expanded({ format, photo, label, onBack, onChange, onPic
             editingSlot={editingSlot}
             onCropChange={(crop) => onChange({ crop })}
             onCropReset={() => onChange({ crop: null })}
+            onDetailChange={(detail) => onChange({ detail })}
             onPhotoTap={onPickPhoto}
             onTextChange={setText}
             onTextFocus={setEditingSlot}

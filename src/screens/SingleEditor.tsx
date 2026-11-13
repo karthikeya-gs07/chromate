@@ -52,7 +52,7 @@ export default function SingleEditor({ initial, bufferItemId, onBack, onDirtyCha
     try {
       const img = await readImage(file)
       URL.revokeObjectURL(urlRef.current)
-      change({ ...img, crop: null })
+      change({ ...img, crop: null, detail: null })
     } catch {
       showToast("Couldn't open that photo. Try another one.")
     }
@@ -106,7 +106,6 @@ export default function SingleEditor({ initial, bufferItemId, onBack, onDirtyCha
 
   return (
     <Expanded
-      format="story"
       photo={photo}
       label="Story"
       onBack={back}

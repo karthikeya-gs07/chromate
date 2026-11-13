@@ -1,11 +1,23 @@
 import { MAX_PHOTOS, type Photo } from './formats'
 import { pickImages } from './pickImages'
+import { DEFAULT_TEMPLATE_ID } from './templates'
 
 export const newId = () => crypto.randomUUID().slice(0, 8)
 
 // A design with no image yet: the editor shows "Tap to add a photo" in the gray box.
-export function emptyPhoto(): Photo {
-  return { id: newId(), file: null, url: '', width: 1, height: 1, crop: null, texts: ['', ''], layout: 'single' }
+export function emptyPhoto(templateId = DEFAULT_TEMPLATE_ID): Photo {
+  return {
+    id: newId(),
+    templateId,
+    file: null,
+    url: '',
+    width: 1,
+    height: 1,
+    crop: null,
+    detail: null,
+    texts: ['', ''],
+    layout: 'single',
+  }
 }
 
 // Reads an image's pixel size (EXIF orientation applied, same as <img> and createImageBitmap).
@@ -25,7 +37,6 @@ export async function readImage(file: Blob) {
 export async function loadPhoto(file: Blob): Promise<Photo> {
   return { ...emptyPhoto(), ...(await readImage(file)) }
 }
-
 
 async function loadAll(files: File[]) {
   const loaded = await Promise.allSettled(files.map(loadPhoto))

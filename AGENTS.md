@@ -20,6 +20,7 @@ A personal tool for Karthikeya to make Instagram stories from their own photos.
      - drag and pinch the photo, or double-tap to reset it
      - use the ↻ corner button to change the photo
      - tap **Download** or **Add to buffer**
+   - **Close-up** (Figma file bqGw6NCdpGJz9h6xe5MK29, node 14:2): same editor. Full-width photo at the bottom, and the same photo 1.5× closer in the top box. Moving the bottom moves both; dragging or pinching the top fine-tunes only the top. Double-tap the top to make it follow the bottom again. The double text layout isn't in Figma: two columns lined up with the top box.
    - After **Add to buffer**, the editor stays open, so you can swap the photo and add another story.
 3. **Buffer:** a cart of finished stories, at most 10. The panel slides in from the left, and the button for it is at the top right of every screen.
    - Tap a story to re-open it ("Update buffer").
@@ -87,5 +88,6 @@ When the user describes a feature that needs an extra library or model, list wha
 - [ ] Swipe between photos in the expanded view
 - [x] Templates page, single-photo editor and buffer side panel (branch `templates-and-buffer`)
 - [x] Double layout from Figma, node 1:9537
+- [x] Close-up template from Figma, node 14:2 (branch `closeup-template`)
 
 Dev server: `npx vite --port 5173 --host`

@@ -72,7 +72,6 @@ export default function BatchFlow({ initialPhotos, onExit, onDirtyChange }: Prop
   if (openPhoto) {
     return (
       <Expanded
-        format="story"
         photo={openPhoto}
         label={`Story ${photos.indexOf(openPhoto) + 1}`}
         onBack={() => setOpenId(null)}

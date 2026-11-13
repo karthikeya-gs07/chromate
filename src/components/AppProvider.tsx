@@ -3,12 +3,16 @@ import type { Photo } from '../lib/formats'
 import { newId } from '../lib/photos'
 import { BUFFER_LIMIT, clearBuffer, deleteItem, loadBuffer, putItem, type StoredItem } from '../lib/bufferStore'
 import Toast from './Toast'
+import { DEFAULT_TEMPLATE_ID } from '../lib/templates'
 import { AppContext, type AppState, type BufferItem } from '../hooks/useApp'
 
 // The buffer keeps its own copy of each photo (new object URL), so editing or deleting
 // the original in the editor never breaks a buffer item.
 function toItem(stored: StoredItem): BufferItem {
-  return { id: stored.id, createdAt: stored.createdAt, photo: { ...stored.photo, url: URL.createObjectURL(stored.photo.file) } }
+  const p = stored.photo
+  // Items saved before multi-template support have no templateId/detail.
+  const photo = { ...p, templateId: p.templateId ?? DEFAULT_TEMPLATE_ID, detail: p.detail ?? null, url: URL.createObjectURL(p.file) }
+  return { id: stored.id, createdAt: stored.createdAt, photo }
 }
 
 function toStored(id: string, createdAt: number, photo: Photo): StoredItem {

@@ -40,7 +40,7 @@ function Screens() {
 
   async function selectTemplate(t: CatalogTemplate) {
     if (t.kind === 'single') {
-      go({ name: 'single', key: newId(), photo: emptyPhoto(), bufferItemId: null })
+      go({ name: 'single', key: newId(), photo: emptyPhoto(t.templateId), bufferItemId: null })
       return
     }
     const photos = await pickBatchPhotos()

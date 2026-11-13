@@ -3,19 +3,16 @@ import TemplateView from '../components/TemplateView'
 import BufferButton from '../components/BufferButton'
 import backIcon from '../assets/back.svg'
 import { emptyPhoto } from '../lib/photos'
-import { STORY_TEMPLATES, TEMPLATES, type CatalogTemplate } from '../lib/templates'
+import { STORY_TEMPLATES, TEMPLATE_BY_ID, type CatalogTemplate } from '../lib/templates'
 
 type Props = {
   onBack: () => void
   onSelect: (template: CatalogTemplate) => void
 }
 
-const preview = emptyPhoto()
 
 // Template repository for Stories. Each card shows a live preview of the layout.
 export default function Templates({ onBack, onSelect }: Props) {
-  const template = TEMPLATES.story
-
   return (
     <main className="relative min-h-dvh bg-black">
       <PlusGrid className="fixed" />
@@ -29,7 +26,10 @@ export default function Templates({ onBack, onSelect }: Props) {
       </header>
 
       <ul className="relative grid grid-cols-2 gap-x-6 gap-y-8 px-[30px] pt-4 pb-[calc(max(env(safe-area-inset-bottom),34px)+24px)]">
-        {STORY_TEMPLATES.map((t) => (
+        {STORY_TEMPLATES.map((t) => {
+          const template = TEMPLATE_BY_ID[t.templateId]
+          const preview = emptyPhoto(t.templateId)
+          return (
           <li key={t.id}>
             <button
               type="button"
@@ -60,7 +60,8 @@ export default function Templates({ onBack, onSelect }: Props) {
               </span>
             </button>
           </li>
-        ))}
+          )
+        })}
       </ul>
     </main>
   )

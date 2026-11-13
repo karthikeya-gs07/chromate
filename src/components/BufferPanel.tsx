@@ -5,7 +5,7 @@ import TemplateView from './TemplateView'
 import { CloseIcon } from './icons'
 import downloadIcon from '../assets/download.svg'
 import { BUFFER_LIMIT } from '../lib/bufferStore'
-import { TEMPLATES } from '../lib/templates'
+import { templateOf } from '../lib/templates'
 import { exportAll } from '../lib/exportImages'
 
 type Props = {
@@ -18,7 +18,6 @@ export default function BufferPanel({ onOpenItem }: Props) {
   const { buffer, removeFromBuffer, emptyBuffer, panelOpen, setPanelOpen, showToast } = useApp()
   const [busy, setBusy] = useState(false)
   const closeRef = useRef<HTMLButtonElement>(null)
-  const template = TEMPLATES.story
 
   // Focus the panel when it opens; Escape closes it.
   useEffect(() => {
@@ -102,7 +101,7 @@ export default function BufferPanel({ onOpenItem }: Props) {
                     aria-label={`Edit story ${i + 1}`}
                     className="block w-full cursor-pointer transition-transform duration-150 active:scale-[0.97]"
                   >
-                    <TemplateView template={template} photo={item.photo} label={`Story ${i + 1}`} />
+                    <TemplateView template={templateOf(item.photo)} photo={item.photo} label={`Story ${i + 1}`} />
                   </button>
                   <button
                     type="button"

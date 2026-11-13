@@ -1,6 +1,6 @@
-import type { Format, Photo } from './formats'
-import { TEMPLATES, templateFont, type Template } from './templates'
-import { coverScale, resolveCrop } from './crop'
+import type { Crop, Format, Photo } from './formats'
+import { templateOf, templateFont, type Rect, type Template } from './templates'
+import { coverScale, resolveCrop, resolveDetailCrop } from './crop'
 import { wrapLines } from './text'
 
 // Export at 2× the template size (story: 2160×3840). Layout stays in template pixels.
@@ -8,7 +8,7 @@ const EXPORT_SCALE = 2
 
 // Renders one photo into the template at EXPORT_SCALE resolution.
 async function renderPhoto(photo: Photo, template: Template): Promise<Blob> {
-  const { width, height, photo: box } = template
+  const { width, height, photo: box, detail } = template
   const canvas = document.createElement('canvas')
   canvas.width = width * EXPORT_SCALE
   canvas.height = height * EXPORT_SCALE
@@ -19,15 +19,18 @@ async function renderPhoto(photo: Photo, template: Template): Promise<Blob> {
   ctx.fillRect(0, 0, width, height)
 
   const bitmap = await createImageBitmap(photo.file!)
-  const crop = resolveCrop(photo, box)
-  const s = coverScale(photo, box) * crop.zoom
-  ctx.save()
-  ctx.beginPath()
-  ctx.rect(box.x, box.y, box.w, box.h)
-  ctx.clip()
-  ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(bitmap, box.x + crop.ox, box.y + crop.oy, photo.width * s, photo.height * s)
-  ctx.restore()
+  const draw = (r: Rect, crop: Crop) => {
+    const s = coverScale(photo, r) * crop.zoom
+    ctx.save()
+    ctx.beginPath()
+    ctx.rect(r.x, r.y, r.w, r.h)
+    ctx.clip()
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(bitmap, r.x + crop.ox, r.y + crop.oy, photo.width * s, photo.height * s)
+    ctx.restore()
+  }
+  draw(box, resolveCrop(photo, box))
+  if (detail) draw(detail.box, resolveDetailCrop(photo, box, detail))
   bitmap.close()
 
   ctx.font = templateFont(template)
@@ -54,12 +57,11 @@ async function renderPhoto(photo: Photo, template: Template): Promise<Blob> {
 export async function exportAll(photos: Photo[], format: Format): Promise<boolean> {
   photos = photos.filter((p) => p.file)
   if (photos.length === 0) return false
-  const template = TEMPLATES[format]
-  await document.fonts.load(templateFont(template))
+  await document.fonts.load(templateFont(templateOf(photos[0])))
 
   const files: File[] = []
   for (const [i, photo] of photos.entries()) {
-    const blob = await renderPhoto(photo, template)
+    const blob = await renderPhoto(photo, templateOf(photo))
     files.push(new File([blob], `chromate-${format}-${String(i + 1).padStart(2, '0')}.jpg`, { type: 'image/jpeg' }))
   }
 
