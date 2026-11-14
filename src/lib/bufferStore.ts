@@ -2,7 +2,7 @@ import type { Photo } from './formats'
 
 // Buffer = a temporary "cart" of finished stories. Kept in the app's private IndexedDB (never
 // sent anywhere, not visible in Photos/Files) so it survives iOS killing the app in the
-// background. Items expire after BUFFER_TTL and the store is emptied after "Save all".
+// background. Items expire after BUFFER_TTL and the store is emptied after "Download all".
 
 export const BUFFER_LIMIT = 10
 export const BUFFER_TTL = 12 * 60 * 60 * 1000

@@ -29,7 +29,7 @@ const textStyle = { fontSize: 24, lineHeight: 26, fontWeight: 400, color: '#8484
 // Story text can wrap down to 90px above the bottom edge (same as the side margin): 9 lines.
 const story: Template = {
   id: 'text-story',
-  name: 'Text',
+  name: 'Polaroid',
   width: 1080,
   height: 1920,
   background: '#ffffff',
@@ -69,7 +69,7 @@ const post: Template = {
 // The double layout isn't in Figma: two columns lined up with the top box's edges.
 const closeup: Template = {
   id: 'closeup-story',
-  name: 'Close-up',
+  name: 'Focus',
   width: 1080,
   height: 1920,
   background: '#ffffff',
@@ -98,20 +98,17 @@ export const DEFAULT_TEMPLATE_ID = story.id
 export const templateOf = (photo: { templateId?: string }) =>
   TEMPLATE_BY_ID[photo.templateId ?? DEFAULT_TEMPLATE_ID] ?? story
 
-export const templateFont = (t: Template) => `${t.textStyle.fontWeight} ${t.textStyle.fontSize}px Nohemi`
+export const templateFont = (t: Template) => `${t.textStyle.fontWeight} ${t.textStyle.fontSize}px 'Google Sans'`
 
 // Templates the user picks from on the Templates page (Stories only for now).
-// `templateId` is the layout above; `kind` decides which editor opens.
+// `templateId` is the layout above.
 export type CatalogTemplate = {
   id: string
   name: string
-  description: string
-  kind: 'batch' | 'single'
   templateId: string
 }
 
 export const STORY_TEMPLATES: CatalogTemplate[] = [
-  { id: 'batch', name: 'Batch', description: 'Up to 10 photos at once', kind: 'batch', templateId: story.id },
-  { id: 'single-text', name: 'Photo + text', description: 'One photo, single or double text', kind: 'single', templateId: story.id },
-  { id: 'closeup', name: 'Close-up', description: 'One photo plus a zoomed-in detail', kind: 'single', templateId: closeup.id },
+  { id: 'polaroid', name: 'Polaroid', templateId: story.id },
+  { id: 'focus', name: 'Focus', templateId: closeup.id },
 ]

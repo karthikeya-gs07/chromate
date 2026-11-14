@@ -8,7 +8,7 @@ beforeAll(() => {
 })
 
 const { wrapLines, fitText } = await import('./text')
-const FONT = '400 24px Nohemi'
+const FONT = "400 24px 'Google Sans'"
 
 describe('wrapLines', () => {
   it('keeps short text on one line', () => {

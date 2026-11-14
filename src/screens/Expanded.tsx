@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import PlusGrid from '../components/PlusGrid'
 import TemplateView from '../components/TemplateView'
 import BufferButton from '../components/BufferButton'
-import { glassSurface } from '../components/GlassButton'
 import backIcon from '../assets/back.svg'
 import { type Photo, type TextLayout } from '../lib/formats'
 import { templateOf } from '../lib/templates'
@@ -175,10 +174,15 @@ export default function Expanded({ photo, label, onBack, onChange, onPickPhoto, 
       <div
         className={`relative flex flex-col gap-2.5 rounded-t-[35px] bg-black px-[13px] pt-2.5 pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)] ${editing ? 'hidden' : ''}`}
       >
-        <div role="radiogroup" aria-label="Text layout" className={`${glassSurface} relative grid h-[clamp(64px,11.3dvh,96px)] grid-cols-2 px-2 py-1.5`}>
+        {/* Compact pill: just a mode switch. 44px tall for touch. */}
+        <div
+          role="radiogroup"
+          aria-label="Text layout"
+          className="relative mx-auto grid h-11 w-[168px] grid-cols-2 rounded-full border border-card-border bg-card-fill p-1"
+        >
           <span
             aria-hidden
-            className="absolute top-1.5 bottom-1.5 left-2 w-[calc(50%-8px)] rounded-[23px] border border-card-border bg-card-fill shadow-[inset_0_-8px_22px_0_rgb(255_245_214/0.1)] backdrop-blur-[5.2px] transition-transform duration-300 ease-out"
+            className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-cream/15 transition-transform duration-300 ease-out"
             style={{ transform: `translateX(${layoutIndex * 100}%)` }}
           />
           {LAYOUTS.map((layout) => (
@@ -188,7 +192,7 @@ export default function Expanded({ photo, label, onBack, onChange, onPickPhoto, 
               role="radio"
               aria-checked={photo.layout === layout}
               onClick={() => onChange({ layout })}
-              className={`relative cursor-pointer text-xl text-cream transition-opacity duration-300 ${photo.layout === layout ? '' : 'opacity-50'}`}
+              className={`relative cursor-pointer rounded-full text-sm text-cream transition-opacity duration-300 ${photo.layout === layout ? '' : 'opacity-50'}`}
             >
               {layout}
             </button>

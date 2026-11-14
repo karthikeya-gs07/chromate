@@ -1,5 +1,4 @@
-import { MAX_PHOTOS, type Photo } from './formats'
-import { pickImages } from './pickImages'
+import type { Photo } from './formats'
 import { DEFAULT_TEMPLATE_ID } from './templates'
 
 export const newId = () => crypto.randomUUID().slice(0, 8)
@@ -32,18 +31,4 @@ export async function readImage(file: Blob) {
     throw err
   }
   return { file, url, width: img.naturalWidth, height: img.naturalHeight }
-}
-
-export async function loadPhoto(file: Blob): Promise<Photo> {
-  return { ...emptyPhoto(), ...(await readImage(file)) }
-}
-
-async function loadAll(files: File[]) {
-  const loaded = await Promise.allSettled(files.map(loadPhoto))
-  return loaded.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []))
-}
-
-// Opens the picker for several photos and loads the ones that decode.
-export async function pickBatchPhotos(limit = MAX_PHOTOS) {
-  return loadAll((await pickImages({ multiple: true })).slice(0, limit))
 }

@@ -4,20 +4,18 @@ import useApp from '../hooks/useApp'
 import BufferPanel from './BufferPanel'
 import Landing from '../screens/Landing'
 import Templates from '../screens/Templates'
-import BatchFlow from '../screens/BatchFlow'
 import SingleEditor from '../screens/SingleEditor'
 import type { Format, Photo } from '../lib/formats'
-import { emptyPhoto, newId, pickBatchPhotos } from '../lib/photos'
+import { emptyPhoto, newId } from '../lib/photos'
 import type { CatalogTemplate } from '../lib/templates'
 
 type Screen =
   | { name: 'landing' }
   | { name: 'templates' }
-  | { name: 'batch'; photos: Photo[] }
   // `key` remounts the editor when a different story is opened.
   | { name: 'single'; key: string; photo: Photo; bufferItemId: string | null }
 
-// Story flow: Landing → Templates → (Batch grid | Single editor), with the buffer panel on top.
+// Story flow: Landing → Templates → editor, with the buffer panel on top.
 function Screens() {
   const { buffer, showToast } = useApp()
   const [screen, setScreen] = useState<Screen>({ name: 'landing' })
@@ -38,13 +36,8 @@ function Screens() {
     else go({ name: 'templates' })
   }
 
-  async function selectTemplate(t: CatalogTemplate) {
-    if (t.kind === 'single') {
-      go({ name: 'single', key: newId(), photo: emptyPhoto(t.templateId), bufferItemId: null })
-      return
-    }
-    const photos = await pickBatchPhotos()
-    if (photos.length > 0) go({ name: 'batch', photos })
+  function selectTemplate(t: CatalogTemplate) {
+    go({ name: 'single', key: newId(), photo: emptyPhoto(t.templateId), bufferItemId: null })
   }
 
   function openBufferItem(id: string) {
@@ -63,9 +56,6 @@ function Screens() {
       break
     case 'templates':
       content = <Templates onBack={() => go({ name: 'landing' })} onSelect={selectTemplate} />
-      break
-    case 'batch':
-      content = <BatchFlow initialPhotos={screen.photos} onExit={() => go({ name: 'templates' })} onDirtyChange={setDirty} />
       break
     case 'single':
       content = (

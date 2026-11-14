@@ -88,17 +88,17 @@ export default function SingleEditor({ initial, bufferItemId, onBack, onDirtyCha
     try {
       if (await exportAll([photo], 'story')) {
         setDirty(false)
-        showToast('Saved')
+        showToast('Downloaded')
       }
     } catch {
-      showToast("Couldn't save. Try again.")
+      showToast("Couldn't download. Try again.")
     } finally {
       setBusy(null)
     }
   }
 
   function back() {
-    if (unsaved && !window.confirm("This story isn't in the buffer or saved yet. Go back anyway?")) return
+    if (unsaved && !window.confirm("This story isn't in the buffer or downloaded yet. Go back anyway?")) return
     onBack()
   }
 

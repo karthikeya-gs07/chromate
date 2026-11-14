@@ -25,43 +25,21 @@ export default function Templates({ onBack, onSelect }: Props) {
         <BufferButton className="-mr-2.5" />
       </header>
 
-      <ul className="relative grid grid-cols-2 gap-x-6 gap-y-8 px-[30px] pt-4 pb-[calc(max(env(safe-area-inset-bottom),34px)+24px)]">
-        {STORY_TEMPLATES.map((t) => {
-          const template = TEMPLATE_BY_ID[t.templateId]
-          const preview = emptyPhoto(t.templateId)
-          return (
+      <ul className="relative grid grid-cols-2 gap-x-4 gap-y-6 px-4 pt-4 pb-[calc(max(env(safe-area-inset-bottom),34px)+24px)]">
+        {STORY_TEMPLATES.map((t) => (
           <li key={t.id}>
             <button
               type="button"
               onClick={() => onSelect(t)}
-              className="flex w-full cursor-pointer flex-col gap-3 text-left transition-transform duration-150 active:scale-[0.97]"
+              className="flex w-full cursor-pointer flex-col gap-2.5 text-left transition-transform duration-150 active:scale-[0.97]"
             >
-              <span className="relative block w-full overflow-hidden rounded-[18px] border border-card-border bg-card-fill p-4">
-                {t.kind === 'batch' ? (
-                  // Fanned stack of three stories = many photos at once.
-                  <span className="relative block" style={{ aspectRatio: `${template.width} / ${template.height}` }}>
-                    {[-8, 0, 8].map((deg, i) => (
-                      <span
-                        key={deg}
-                        className="absolute inset-[6%] block shadow-[0_6px_20px_rgb(0_0_0/0.5)]"
-                        style={{ transform: `rotate(${deg}deg) translateX(${(i - 1) * 6}%)`, zIndex: i === 1 ? 2 : 1 }}
-                      >
-                        <TemplateView template={template} photo={preview} label="" />
-                      </span>
-                    ))}
-                  </span>
-                ) : (
-                  <TemplateView template={template} photo={preview} label="" />
-                )}
+              <span className="block w-full overflow-hidden rounded-[10px]">
+                <TemplateView template={TEMPLATE_BY_ID[t.templateId]} photo={emptyPhoto(t.templateId)} label="" />
               </span>
-              <span className="flex flex-col gap-1.5 px-1">
-                <span className="text-lg leading-none text-cream">{t.name}</span>
-                <span className="text-xs leading-tight text-sand">{t.description}</span>
-              </span>
+              <span className="px-0.5 text-lg leading-none text-cream">{t.name}</span>
             </button>
           </li>
-          )
-        })}
+        ))}
       </ul>
     </main>
   )

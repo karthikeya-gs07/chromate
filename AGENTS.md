@@ -10,27 +10,23 @@ Also read before any work:
 
 A personal tool for Karthikeya to make Instagram stories from their own photos.
 
-**Flow:** Landing → Story → **Templates** → the template's editor → **Buffer** → Save all
+**Flow:** Landing → Story → **Templates** → the template's editor → **Buffer** → Download all
 
 1. **Landing:** choose Story (1080×1920) or Post. Post is on hold and shows a "Posts are coming soon" message.
-2. **Templates page:** the story templates. Each is listed in `STORY_TEMPLATES` in `src/lib/templates.ts`.
-   - **Batch** (first): pick up to 10 photos and see them in a 2×N grid. Tap a tile to open it full screen. Each tile has ✕ to delete, and the grid has **Add to buffer** and **Download all**.
-   - **Photo + text**: an empty template. Tap the gray box to pick a photo, then:
-     - choose single or double text, and type straight into the template
-     - drag and pinch the photo, or double-tap to reset it
-     - use the ↻ corner button to change the photo
-     - tap **Download** or **Add to buffer**
-   - **Close-up** (Figma file bqGw6NCdpGJz9h6xe5MK29, node 14:2): same editor. Full-width photo at the bottom, and the same photo 1.5× closer in the top box. Moving the bottom moves both; dragging or pinching the top fine-tunes only the top. Double-tap the top to make it follow the bottom again. The double text layout isn't in Figma: two columns lined up with the top box.
-   - After **Add to buffer**, the editor stays open, so you can swap the photo and add another story.
-3. **Buffer:** a cart of finished stories, at most 10. The panel slides in from the left, and the button for it is at the top right of every screen.
-   - Tap a story to re-open it ("Update buffer").
-   - Tap ✕ to delete it.
-   - **Save all** saves every story at once, then empties the buffer.
-   - It's stored in the app's private IndexedDB, only for the session. It's never sent anywhere, survives iOS killing the app in the background, is deleted after Save all, and expires after 12h.
+2. **Templates page:** the story templates, listed in `STORY_TEMPLATES` in `src/lib/templates.ts`. Plain previews with just the name.
+   - **Polaroid** (Figma node 1:9542): one photo and text below it.
+   - **Focus** (Figma file bqGw6NCdpGJz9h6xe5MK29, node 14:2): full-width photo at the bottom, and the same photo 1.5× closer in the top box. Moving the bottom moves both; dragging or pinching the top fine-tunes only the top. Double-tap the top to make it follow the bottom again. The double text layout isn't in Figma: two columns lined up with the top box.
+   - Editor: tap the gray box to pick a photo, small single/double pill, type straight into the template, drag/pinch/double-tap the photo, ↻ to change it, then **Download** or **Add to buffer**. The editor stays open after adding.
+   - Batch (multi-photo grid) was removed by decision.
+3. **Buffer:** a cart of finished stories, at most 10. The panel slides in from the right, and the button for it is at the top right of every screen.
+   - Tap a story to re-open it ("Update buffer"). Tap ✕ to delete it.
+   - **Download all** downloads every story at once, then empties the buffer. **Empty** clears it after a confirm.
+   - It's stored in the app's private IndexedDB, only for the session. It's never sent anywhere, survives iOS killing the app in the background, and expires after 12h.
 4. **Coming later:** templates with several photo boxes (gray boxes = photo slots). The user gives the specs for each template.
 
 **Rules:**
-- **Font:** Nohemi (the user provides the files).
+- **Font:** Google Sans, self-hosted (`public/fonts/GoogleSans-latin.woff2`), for the app and the story text.
+- **Wording:** always "Download", never "Save".
 - **No server:** no accounts, no backend. Everything runs on the phone, and only the buffer is kept temporarily, in the app's IndexedDB.
 - **Leave warning:** warn before you leave or refresh if there's work that hasn't been downloaded.
 - **Templates are data:** so new ones can be added without rewriting the app.
@@ -74,7 +70,7 @@ When the user describes a feature that needs an extra library or model, list wha
 - [x] Project brief from the user
 - [x] Stack set up: React, Vite, TypeScript, Tailwind v4, vite-plugin-pwa
 - [x] Phone-only gate, with QR code and Copy link
-- [x] Nohemi font in `public/fonts`
+- [x] Google Sans font in `public/fonts` (replaced Nohemi)
 - [x] Local Git repo
 - [x] Live at https://chromate-five.vercel.app, from the private repo github.com/karthikeya-gs07/chromate
 - [x] Vercel auto-deploy from GitHub. Pushing to `main` deploys to production.

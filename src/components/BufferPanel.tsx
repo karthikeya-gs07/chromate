@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import useApp from '../hooks/useApp'
 import GlassButton from './GlassButton'
 import TemplateView from './TemplateView'
-import { CloseIcon } from './icons'
+import { CloseIcon, TrashIcon } from './icons'
 import downloadIcon from '../assets/download.svg'
 import { BUFFER_LIMIT } from '../lib/bufferStore'
 import { templateOf } from '../lib/templates'
@@ -13,10 +13,11 @@ type Props = {
   onOpenItem: (id: string) => void
 }
 
-// The buffer ("cart") as a side panel sliding in from the left. Available on every screen.
+// The buffer ("cart") as a side panel sliding in from the right, under the buffer button. Available on every screen.
 export default function BufferPanel({ onOpenItem }: Props) {
   const { buffer, removeFromBuffer, emptyBuffer, panelOpen, setPanelOpen, showToast } = useApp()
   const [busy, setBusy] = useState(false)
+  const empty = buffer.length === 0
   const closeRef = useRef<HTMLButtonElement>(null)
 
   // Focus the panel when it opens; Escape closes it.
@@ -28,23 +29,31 @@ export default function BufferPanel({ onOpenItem }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [panelOpen, setPanelOpen])
 
-  async function saveAll() {
+  async function downloadAll() {
     setBusy(true)
     try {
       const count = buffer.length
-      const saved = await exportAll(
+      const done = await exportAll(
         buffer.map((i) => i.photo),
         'story',
       )
-      if (!saved) return
+      if (!done) return
       await emptyBuffer()
       setPanelOpen(false)
-      showToast(`Saved ${count} ${count === 1 ? 'story' : 'stories'}`)
+      showToast(`Downloaded ${count} ${count === 1 ? 'story' : 'stories'}`)
     } catch {
-      showToast("Couldn't save. Try again.")
+      showToast("Couldn't download. Try again.")
     } finally {
       setBusy(false)
     }
+  }
+
+  async function clearAll() {
+    const n = buffer.length
+    const what = n === 1 ? 'the story' : `all ${n} stories`
+    if (!window.confirm(`Delete ${what} in the buffer? This can't be undone.`)) return
+    await emptyBuffer()
+    showToast('Buffer emptied')
   }
 
   return (
@@ -62,7 +71,7 @@ export default function BufferPanel({ onOpenItem }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="Buffer"
-        className={`absolute inset-y-0 left-0 flex w-[min(86vw,360px)] flex-col rounded-r-[35px] border-r border-card-border bg-black transition-transform duration-300 ease-out ${panelOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`absolute inset-y-0 right-0 flex w-[min(86vw,360px)] flex-col rounded-l-[35px] border-l border-card-border bg-black transition-transform duration-300 ease-out ${panelOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <header className="flex items-center justify-between px-6 pt-[calc(env(safe-area-inset-top)+30px)] pb-4">
           <h2 className="flex items-baseline gap-2 text-xl leading-none text-cream">
@@ -83,10 +92,10 @@ export default function BufferPanel({ onOpenItem }: Props) {
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-2 pb-6">
-          {buffer.length === 0 ? (
+          {empty ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
               <p className="text-lg text-cream">Your buffer is empty</p>
-              <p className="text-sm text-sand">Finish a story and tap Add to buffer. Everything here saves in one go.</p>
+              <p className="text-sm text-sand">Finish a story and tap Add to buffer. Download everything here in one go.</p>
             </div>
           ) : (
             <ul className="grid grid-cols-2 gap-5">
@@ -99,7 +108,7 @@ export default function BufferPanel({ onOpenItem }: Props) {
                       onOpenItem(item.id)
                     }}
                     aria-label={`Edit story ${i + 1}`}
-                    className="block w-full cursor-pointer transition-transform duration-150 active:scale-[0.97]"
+                    className="block w-full cursor-pointer overflow-hidden rounded-[10px] transition-transform duration-150 active:scale-[0.97]"
                   >
                     <TemplateView template={templateOf(item.photo)} photo={item.photo} label={`Story ${i + 1}`} />
                   </button>
@@ -119,14 +128,23 @@ export default function BufferPanel({ onOpenItem }: Props) {
           )}
         </div>
 
-        <div className="px-[13px] pt-2 pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)]">
+        <div className="grid grid-cols-[1fr_auto] gap-2.5 px-[13px] pt-2 pb-[calc(max(env(safe-area-inset-bottom),34px)+8px)]">
           <GlassButton
-            onClick={saveAll}
-            disabled={busy || buffer.length === 0}
-            className="flex h-[72px] w-full items-center justify-center gap-[7px]"
+            onClick={downloadAll}
+            disabled={busy || empty}
+            className="flex h-16 items-center justify-center gap-[7px]"
           >
             <img src={downloadIcon} alt="" width={27} height={24} />
-            <span className="text-xl leading-none text-cream">{busy ? 'Preparing…' : 'Save all'}</span>
+            <span className="text-lg leading-none text-cream">{busy ? 'Preparing…' : 'Download all'}</span>
+          </GlassButton>
+          <GlassButton
+            onClick={clearAll}
+            disabled={busy || empty}
+            aria-label="Empty buffer"
+            className="flex h-16 items-center justify-center gap-2 px-5"
+          >
+            <TrashIcon />
+            <span className="text-lg leading-none text-cream">Empty</span>
           </GlassButton>
         </div>
       </aside>
